@@ -53,7 +53,7 @@ docker run \
        -e PREALIGN_TIMEOUT=3600 \
        -e PREALIGN_CHECKINTERVAL=10 \
        -e ALIGNMENT_MEMORY=10G \
-       registry.int.janelia.org/jacs-scripts/neuronbridge-aligner:1.1 \
+       registry.int.janelia.org/neuronbridge/neuronbridge-brainaligner:1.0 \
        /opt/aligner-scripts/run_aligner.sh \
        -debug \
        --forceVxSize ${FORCE} \

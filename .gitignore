@@ -1,4 +1,5 @@
 .env
-local
 *~
 *.bak
+local
+.DS_Store
