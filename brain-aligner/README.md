@@ -1,21 +1,17 @@
-# NeuronBridge Aligner
+# NeuronBridge Brain Aligner
 
-3D Volume Aligner used by NeuronBridde
+3D Brain Volume Aligner used by NeuronBridde
 
 
 Build:
 ```
-./manage.sh build neuronbridge-aligner
-```
-or
-```
-docker build . -t registry.int.janelia.org/jacs-scripts/neuronbridge-aligner:1.0.0
+./manage.sh build brain-aligner
 ```
 
 Publish:
 ```
-./manage.sh pushTags neuronbridge-aligner
+./manage.sh push brain-aligner
 ```
 
 Run:
-Take a look at [examples/run-neuronbridge-aligner.sh](examples/run-neuronbridge-aligner.sh)
+Take a look at [examples/run-brain-aligner.sh](examples/run-brain-aligner.sh)

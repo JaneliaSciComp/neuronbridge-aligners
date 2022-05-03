@@ -2,7 +2,6 @@
 
 SUDO=
 DOCKER=docker
-NAMESPACE=
 
 COMMANDS=$1
 CMDARR=(${COMMANDS//+/ })
@@ -37,6 +36,18 @@ function findContainerDirs {
     fi
 }
 
+function readNamespaces {
+    namespaces=()
+    if [[ -e ".env" ]] ; then
+        source .env
+        namespaces=($(awk '/NAMESPACE=/ { print(substr($1,11))}' .env))
+            for t in ${local_container_tags[@]}; do
+                $SUDO $DOCKER push ${t}
+            done
+
+    fi
+}
+
 function buildContainer() {
     local _name=$1
 
@@ -45,14 +56,24 @@ function buildContainer() {
     for cdir in ${container_dirs[@]}; do
         local container_name=$(basename "$cdir")
         echo "Build $container_name in $cdir"
-        local BUILD_ARGS=""
 
-        if [[ -e "${cdir}/TAGS" ]]; then
-            local local_container_tags=($(awk '{ print($1)}' "$cdir/TAGS"))
-            for t in ${local_container_tags[@]}; do
-                BUILD_ARGS="${BUILD_ARGS} -t ${t}"
-            done
+        local BUILD_ARGS=""
+        local NAME=""
+
+        if [[ -e "${cdir}/NAME" ]]; then
+            NAME=$(cat "${cdir}/NAME")
+        else
+            NAME="${container_name}:latest"
         fi
+
+        if [[ ${#namespaces[@]} -gt 0 ]]; then
+            for ns in ${namespaces[@]}; do
+                BUILD_ARGS="${BUILD_ARGS} -t ${ns}/${NAME}"
+            done
+        else
+            BUILD_ARGS="${BUILD_ARGS} -t ${NAME}"
+        fi
+
         $SUDO $DOCKER build $BUILD_ARGS $cdir
     done
 }
@@ -63,10 +84,17 @@ function pushContainer() {
     findContainerDirs "${_name}"
 
     for cdir in ${container_dirs[@]}; do
-        if [[ -e "${cdir}/TAGS" ]]; then
-            local local_container_tags=($(awk '{ print($1)}' "$cdir/TAGS"))
-            for t in ${local_container_tags[@]}; do
-                $SUDO $DOCKER push ${t}
+        local NAME=""
+
+        if [[ -e "${cdir}/NAME" ]]; then
+            NAME=$(cat "${cdir}/NAME")
+        else
+            NAME="${container_name}:latest"
+        fi
+
+        if [[ ${#namespaces[@]} -gt 0 ]]; then
+            for ns in ${namespaces[@]}; do
+                $SUDO $DOCKER push "${ns}/${NAME}"
             done
         fi
     done
@@ -76,6 +104,8 @@ if [[ ${#@} -eq 0 ]] ; then
     echo $helpmsg
     exit 1
 fi
+
+readNamespaces
 
 for COMMAND in "${CMDARR[@]}" ; do
     case ${COMMAND} in
