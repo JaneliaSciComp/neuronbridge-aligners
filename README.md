@@ -1,4 +1,4 @@
-# NeuronBridge Aligners
+# NeuronBridge image aligners
 
 [![DOI](https://zenodo.org/badge/488336834.svg)](https://zenodo.org/badge/latestdoi/488336834)
 
