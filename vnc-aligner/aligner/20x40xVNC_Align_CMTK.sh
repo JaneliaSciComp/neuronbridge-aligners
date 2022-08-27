@@ -5,21 +5,19 @@
 
 InputFilePath=$1
 NSLOTS=$2
-OUTPUTORI=$3
+FINALOUTPUT=$3
+returnedErrorFilename=$4
 nc82decision="Signal_amount"
 
-OUTPUTNAME=$(basename $InputFilePath)
+InputFileName=$(basename $InputFilePath)
 # final output name is the filename without extension
-OUTPUTNAME=${OUTPUTNAME%.*} # final output name is the filename without extension
+InputName=${InputFileName%.*} # final output name is the filename without extension
+InputFileParentPath=$(dirname ${InputFilePath})
 
-WORK_DIRPRE=$(dirname $InputFilePath)
-WORK_DIR="${WORK_DIRPRE}/${OUTPUTNAME}"
-
-if [[ ! -d ${OUTPUTORI} ]]; then
-    mkdir -p ${OUTPUTORI}
-fi
-
-OUTPUT="${OUTPUTORI}/${OUTPUTNAME}"
+WORKING_DIR=${WORKING_DIR:-"${InputFileParentPath}/${InputName}_TMP"}
+DEBUG_DIR="${WORKING_DIR}/Debug"
+OUTPUT="${WORKING_DIR}/Output"
+FINALOUTPUT=${FINALOUTPUT:-"${WORKING_DIR}/FinalOutputs"}
 
 # Tools
 CMTK=/opt/CMTK/bin
@@ -37,9 +35,11 @@ NRRDCOMP="$MACRO_DIR/nrrd_compression.ijm"
 export CMTK_WRITE_UNCOMPRESSED=1
 
 # "-------------------Template----------------------"
-TEMPLATE_DIR=${TEMPLATE_DIR:-"/data/alignment_templates"}
-TemplatesDir=`realpath ${TEMPLATE_DIR}`
-MIPTemplatesDir="${MACRO_DIR}/Template_MIP"
+MIP_TEMPLATE_DIR=${MIP_TEMPLATE_DIR:-"/data/alignment_templates"}
+ALIGN_TEMPLATE_DIR=${ALIGN_TEMPLATE_DIR:-"/data/vnc-templates"}
+
+TemplatesDir=`realpath ${ALIGN_TEMPLATE_DIR}`
+MIPTemplatesDir=`realpath ${MIP_TEMPLATE_DIR}`
 
 JRC2018_VNC_Unisex1micron="$TemplatesDir/JRC2018_VNC_UNISEX_1micron.nrrd"
 
@@ -54,7 +54,7 @@ elif [[ $TEMPLATE_SELECTOR == 4 ]]; then
     TEMPNAME="JRC2018_VNC_MALE_447_G15.nrrd"
 fi
 
-TARGET_TEMPLATE=$TemplatesDir"/${TEMPNAME}"
+TARGET_TEMPLATE="$TemplatesDir/${TEMPNAME}"
 
 echo "TEMPNAME; "$TEMPNAME
 
@@ -99,9 +99,9 @@ function scoreGen() {
 	local _scoretemp="$2"
 	local _result_var="$3"
 	
-	tempfilename=`basename $_scoretemp`
-	tempname=${tempfilename%%.*}
-	scorepath="$OUTPUT/${tempname}_Score.property"
+	local tempfilename=`basename $_scoretemp`
+	local tempname=${tempfilename%%.*}
+	local scorepath="$OUTPUT/${tempname}_Score.property"
 	
 	if [[ -e ${scorepath} ]]; then
 	    echo "Already exists: $scorepath"
@@ -247,16 +247,12 @@ function banner() {
     echo "------------------------------------------------------------------------------------------------------------"
 }
 
-
 # Main Script
 
-if [[ ! -d $OUTPUT ]]; then
-    mkdir $OUTPUT
-fi
-
-if [[ ! -d $FINALOUTPUT ]]; then
-    mkdir $FINALOUTPUT
-fi
+mkdir -p $WORKING_DIR
+mkdir -p $OUTPUT
+mkdir -p $DEBUG_DIR
+mkdir -p $FINALOUTPUT
 
 if [[ ! -e $PREPROCIMG ]]; then
     echo "Preprocess macro could not be found at $PREPROCIMG"
@@ -399,14 +395,13 @@ fi
 
 FLIP_NEURON=""
 DEFFIELD="$registered_warp_xform"
-fn=${OUTPUTNAME}
-sig="$OUTPUT/$fn"
+sig="$OUTPUT/${InputName}"
 TEMP=$TARGET_TEMPLATE
 gsig="$OUTPUT/$filename"
 
-echo "reformat output; "${sig}"_01.nrrd"
+echo "reformat output; ${sig}_01.nrrd"
 
-if [[ ! -e ${sig}"_01.nrrd" ]]; then
+if [[ ! -e "${sig}_01.nrrd" ]]; then
     ########################################################################################################
     # JRC2018 unisex reformat
     ########################################################################################################
@@ -423,7 +418,7 @@ fi
 
 for ((ii=1; ii<=4; ii++)); do
     if [[ -e "${sig}_0${ii}.nrrd" ]]; then
-        $FIJI --headless -macro ${MIPGENERATION} "${OUTPUT}/,${sig}_0"$ii".nrrd,${OUTPUTORI}/MIP/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
+        $FIJI --headless -macro ${MIPGENERATION} "${OUTPUT}/,${sig}_0"$ii".nrrd,${FINALOUTPUT}/MIP/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
     fi
 done
 

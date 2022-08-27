@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Run aligner with $*"
+echo "Run brain aligner with $*"
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 
@@ -25,6 +25,7 @@ help_cmd="$0
     -o <output directory>
     -debug
     -h"
+
 while [[ $# > 0 ]]; do
     key="$1"
     shift # past the key

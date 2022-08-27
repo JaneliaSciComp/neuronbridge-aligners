@@ -13,7 +13,7 @@ RUN yum install -y python3-pip && \
     pip3 install yq
 
 RUN echo "Installing S3 FUSE and AWS CLI"
-RUN yum install -y fuse-devel s3fs-fuse groff wget unzip less
+RUN yum install -y fuse-devel s3fs-fuse groff-base wget tar unzip less
 
 WORKDIR /awsinstall
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -25,7 +25,9 @@ WORKDIR /opt
 
 # Prereqs for Fiji
 RUN yum install -y \
-        mesa-libGLU qt qt-x11 libXv numactl-libs libXtst-devel libXrender
+        mesa-libGLU \
+        qt5-qtbase qt5-qtx11extras \
+        libXv numactl-libs libXtst-devel libXrender
 
 RUN echo "Installing Fiji"
 # Install Fiji

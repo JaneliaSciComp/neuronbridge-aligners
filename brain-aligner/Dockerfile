@@ -25,7 +25,9 @@ WORKDIR /opt
 
 # Prereqs for Fiji
 RUN yum install -y \
-        mesa-libGLU qt qt-x11 libXv numactl-libs libXtst-devel libXrender
+        mesa-libGLU \
+        qt qt-x11 \
+        libXv numactl-libs libXtst-devel libXrender
 
 RUN echo "Installing Fiji"
 # Install Fiji
