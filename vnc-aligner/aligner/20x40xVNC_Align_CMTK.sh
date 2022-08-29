@@ -143,7 +143,7 @@ function reformat() {
         $CMTK/reformatx --threads $NSLOTS -o "$_sig" $_opts --floating $_gsig $_TEMP $_DEFFIELD
         STOP=`date '+%F %T'`
 
-        $FIJI --headless -macro $NRRDCOMP "$_sig"
+        $FIJI --headless --headless -macro $NRRDCOMP "$_sig"
 
         if [[ ! -e $_sig ]]; then
             echo -e "Error: CMTK reformatting signal failed"
@@ -315,23 +315,44 @@ else
     fi
     echo "+---------------------------------------------------------------------------------------+"
     echo "| Running Otsuna preprocessing step                                                     |"
-    echo "| $FIJI -macro $PREPROCIMG \"$OUTPUT/,$filename,$TemplatesDir,$InputFilePath,ssr,$GENDER_TEMPLATE_SELECTOR,NULL,$NSLOTS,$SHAPE_ANALYSIS\" >$DEBUG_DIR/preproc.log 2>&1 |"
+    echo "| $FIJI --headless -macro ${PREPROCIMG} \"${OUTPUT}/,${filename},${TemplatesDir},${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}\" >$DEBUG_DIR/preproc.log 2>&1 |"
     echo "+---------------------------------------------------------------------------------------+"
     START=`date '+%F %T'`
     # Expect to take far less than 1 hour
-    $FIJI --headless -macro $PREPROCIMG "$OUTPUT/,${filename},$TemplatesDir/,$InputFilePath,ssr,$GENDER_TEMPLATE_SELECTOR,NULL,$NSLOTS,${SHAPE_ANALYSIS},${nc82decision}" >$DEBUG_DIR/preproc.log 2>&1
+    $FIJI --headless -macro ${PREPROCIMG} "${OUTPUT}/,${filename},${TemplatesDir}/,${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}" >$DEBUG_DIR/preproc.log 2>&1
+    preprocessExitCode=$?
+
     STOP=`date '+%F %T'`
+
     echo "Otsuna preprocessing start: $START"
-    echo "Otsuna preprocessing stop: $STOP"
+    echo "Otsuna preprocessing stop: $STOP with exit code ${preprocessExitCode}"
     # check for prealigner errors
 
-    if [[ $testmode != 1 ]]; then
-        cp $LOGFILE $DEBUG_DIR
-        PreAlignerError=`grep "PreAlignerError: " $LOGFILE | head -n1 | sed "s/PreAlignerError: //"`
-        if [[ ! -z "$PreAlignerError" ]]; then
-            writeErrorProperties "PreAlignerError" "JRC2018_VNC_${genderT}" "$objective" "Pre-aligner rejection: $PreAlignerError"
-            exit 0
-        fi
+    cp $LOGFILE $DEBUG_DIR
+    CoreDumpError=`grep SIGSEGV $DEBUG_DIR/preproc.log`
+    PreAlignerError=`grep "PreAlignerError: " $LOGFILE | head -n1 | sed "s/PreAlignerError: //"`
+    MemoryError=`grep -i "Cannot allocate memory" $LOGFILE | head -n1`
+    OutOfMemoryError=`grep -i "out of memory" $LOGFILE | head -n1`
+    if [[ ! -z "${CoreDumpError}" ]] ; then
+        ALIGNMENT_ERROR="Preprocessing failed with a fatal error"
+    elif [[ ! -z "${PreAlignerError}" ]]; then
+        ALIGNMENT_ERROR="Pre-aligner rejection: $PreAlignerError"
+    elif [[ ! -z "${MemoryError}" || ! -z "${OutOfMemoryError}" ]] ; then
+        ALIGNMENT_ERROR="Out of memory error";
+    fi
+    if [[ ! -z "${ALIGNMENT_ERROR}" ]]; then
+        echo "~ Preprocessing output"
+        tail -1000 $DEBUG_DIR/preproc.log
+        echo "~ Preprocessing log"
+        cat ${LOGFILE}
+        echo "~ Preprocessing error: ${ALIGNMENT_ERROR}"
+        echo ${ALIGNMENT_ERROR} > ${returnedErrorFilename} 
+        exit 1
+    elif [[ ${DEBUG_MODE} =~ "debug" ]]; then
+        echo "~ Preprocessing output"
+        tail -1000 $DEBUG_DIR/preproc.log
+        echo "~ Preprocessing log"
+        cat ${LOGFILE}
     fi
 fi
 

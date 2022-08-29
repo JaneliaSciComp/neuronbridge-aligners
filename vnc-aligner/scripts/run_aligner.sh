@@ -4,6 +4,10 @@ echo "Run VNC aligner with $*"
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 
+nslots=2
+input_filepath=
+output_dir=
+
 help_cmd="$0 
     --nslots <nslots (default = 2)>
     --templatedir <template config directory>
@@ -24,7 +28,7 @@ while [[ $# > 0 ]]; do
             export MIP_TEMPLATE_DIR="$1"
             shift # past value
             ;;
-        --aligntemplatedir)
+        --vncaligntemplatedir)
             export ALIGN_TEMPLATE_DIR="$1"
             shift # past value
             ;;
@@ -71,7 +75,7 @@ mkdir -p ${ALIGNMENT_OUTPUT}
 alignmentErrFile=${alignmentErrFile:-"${output_dir}/alignErr.txt"}
 export FINALOUTPUT=${ALIGNMENT_OUTPUT}
 
-echo "~ Run alignment: ${input_filepath} ${nslots} ${xyres} ${zres} ${use_voxel_resolution_args} ${reference_channel} ${comparison_alg} ${alignmentErrFile}"
+echo "~ Run alignment: ${input_filepath} ${nslots} ${FINALOUTPUT} ${alignmentErrFile}"
 /opt/aligner/20x40xVNC_Align_CMTK.sh ${input_filepath} ${nslots} ${FINALOUTPUT} ${alignmentErrFile}
 alignmentExitCode=$?
 

@@ -1,4 +1,4 @@
-FROM oraclelinux:8
+FROM scientificlinux/sl:7
 
 RUN yum install -y epel-release && \
     yum install -y \
@@ -25,8 +25,9 @@ WORKDIR /opt
 
 # Prereqs for Fiji
 RUN yum install -y \
+        alsa-lib \
         mesa-libGLU \
-        qt5-qtbase qt5-qtx11extras \
+        qt qt-x11 \
         libXv numactl-libs libXtst-devel libXrender
 
 RUN echo "Installing Fiji"
