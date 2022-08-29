@@ -46,9 +46,12 @@ RUN wget -q http://workstation.int.janelia.org/files/tools/${CMTK_FILE}
 RUN tar xvf $CMTK_FILE && /bin/rm -f $CMTK_FILE && \
     ln -s cmtk-scm-2017-10-01 CMTK
 
-ENV S3_TEMPLATES_MOUNTPOINT=/s3_alignment_templates
+# create mount points for MIP templates and VNC alignment templates
+ENV S3_MIP_TEMPLATES_MOUNTPOINT=/s3_mip_templates
+ENV S3_VNC_TEMPLATES_MOUNTPOINT=/s3_vnc_alignment_templates
 
-RUN mkdir -p ${S3_TEMPLATES_MOUNTPOINT}
+RUN mkdir -p ${S3_MIP_TEMPLATES_MOUNTPOINT}
+RUN mkdir -p ${S3_VNC_TEMPLATES_MOUNTPOINT}
 
 # copy alignment scripts
 COPY aligner /opt/aligner
