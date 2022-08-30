@@ -41,10 +41,6 @@ function readNamespaces {
     if [[ -e ".env" ]] ; then
         source .env
         namespaces=($(awk '/NAMESPACE=/ { print(substr($1,11))}' .env))
-            for t in ${local_container_tags[@]}; do
-                $SUDO $DOCKER push ${t}
-            done
-
     fi
 }
 
