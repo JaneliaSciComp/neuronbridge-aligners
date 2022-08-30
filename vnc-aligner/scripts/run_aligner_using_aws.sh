@@ -11,8 +11,8 @@ outputs_s3bucket_name=
 searchId=
 input_filepath=
 output_dir=
-mip_templates_dir_param=
-vnc_templates_dir_param=
+mip_templates_dir_param=alignment_templates
+vnc_templates_dir_param=vnc_alignment_templates/
 other_args=()
 use_iam_role=
 skipCopyInputIfExists=false
@@ -225,16 +225,20 @@ if [[ "${templates_s3bucket_name}" != "" ]] ; then
     ${mountMIPTemplatesCmd}
     ${mountVNCTemplatesCmd}
     if [[ "${mip_templates_dir_param}" != "" ]] ; then
-        mip_templates_dir=${S3_MIP_TEMPLATES_MOUNTPOINT}/${templates_dir_param}
+        mip_templates_dir=${S3_MIP_TEMPLATES_MOUNTPOINT}/${mip_templates_dir_param}
     else
         mip_templates_dir=${S3_MIP_TEMPLATES_MOUNTPOINT}
     fi
+    echo "Check ${mip_templates_dir}"
+    ls ${mip_templates_dir}
     if [[ "${vnc_templates_dir_param}" != "" ]] ; then
-        vnc_templates_dir=${S3_MIP_TEMPLATES_MOUNTPOINT}/${vnc_templates_dir_param}
+        vnc_templates_dir=${S3_VNC_TEMPLATES_MOUNTPOINT}/${vnc_templates_dir_param}
     else
-        vnc_templates_dir=${S3_MIP_TEMPLATES_MOUNTPOINT}
+        vnc_templates_dir=${S3_VNC_TEMPLATES_MOUNTPOINT}
     fi
-    templates_dir_arg="--miptemplatedir ${mip_templates_dir} --aligntemplatedir ${vnc_templates_dir}"
+    echo "Check ${vnc_templates_dir}"
+    ls ${vnc_templates_dir}
+    templates_dir_arg="--miptemplatedir ${mip_templates_dir} --vncaligntemplatedir ${vnc_templates_dir}"
 else
     # will use default templates
     templates_dir_arg=""
@@ -258,8 +262,10 @@ export alignmentErrFile="${results_dir}/alignErr.txt"
 /opt/aligner-scripts/run_aligner.sh "${run_align_cmd_args[@]}"
 alignment_exit_code=$?
 if [[ "${alignment_exit_code}" != "0" ]] ; then
-    alignmentErr=$(cat "${alignmentErrFile}" || "")
-    echo "Alignment exited with ${alignment_exit_code}: ${alignmentErr}";
+    if [[ -e "${alignmentErrFile}" ]] ; then
+        alignmentErr=$(cat "${alignmentErrFile}" || "")
+        echo "Alignment exited with ${alignment_exit_code}: ${alignmentErr}";
+    fi
     if [[ ! -z "${alignmentErr}" ]]; then
         errorMessage=${alignmentErr}
     else

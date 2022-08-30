@@ -437,9 +437,12 @@ if [[ ! -e "${OUTPUT}/Score_log_${TEMPNAME%.*}.txt" ]]; then
     scoreGen "$sig_01.nrrd" ${TARGET_TEMPLATE} "score2018"
 fi
 
+# Generate MIPs
+MIPS_OUTPUT=${MIPS_OUTPUT:-"${OUTPUT}/MIP"}
+
 for ((ii=1; ii<=4; ii++)); do
     if [[ -e "${sig}_0${ii}.nrrd" ]]; then
-        $FIJI --headless -macro ${MIPGENERATION} "${OUTPUT}/,${sig}_0"$ii".nrrd,${FINALOUTPUT}/MIP/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
+        $FIJI --headless -macro ${MIPGENERATION} "${OUTPUT}/,${sig}_0"$ii".nrrd,${MIPS_OUTPUT}/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
     fi
 done
 
