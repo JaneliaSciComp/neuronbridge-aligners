@@ -4,7 +4,6 @@
 //"Gamma_.jar", "Size_to_Skelton.jar", "Nrrd_Writer.class" (modified for compressed nrrd option)
 run("Misc...", "divide=Infinity save");
 MIPsave=1;
-handleCH=2;//number of handling channels for 01, 02 ZIP file
 ShapeAnalysis="false";//perform shape analysis and kick strange sample
 
 Batch=1;
@@ -16,10 +15,12 @@ AdvanceDepth=false;// depth vx size adjustment
 //StackHeight=1024;
 ShapeProblem=0;
 
+nc82decision="Signal_amount";//"Signal_amount","ch1","ch2","ch3","ch4"
+
 // Arguments
 
 argstr=0;
-inputfile="MB131B-20121018_31_F1.zip";
+inputfile="Lgs1NB_140904_Gr89a_TAG_SytHA_GFP_nc82_02_original.h5j";
 
 //argstr="D:"+File.separator+",I1_ZB49_T1,D:"+File.separator+"Dropbox (HHMI)"+File.separator+"VNC_project"+File.separator+"VNC_Lateral_F.tif,C:"+File.separator+"I2_ZB50_T1.v3draw,sr,0.2965237,0.2965237,f"//for test
 
@@ -28,6 +29,10 @@ inputfile="MB131B-20121018_31_F1.zip";
 //argstr="/test/VNC_pipeline/,BJD_103D01_AE_01_20170510_63_A5_VNC.v3draw,/Users/otsunah/Dropbox (HHMI)/VNC_project/,/Users/otsunah/Downloads/Workstation/BJD_103D01_AE_01/BJD_103D01_AE_01_20170510_63_A5_VNC.v3draw,sssr,0.45,0.45,f,/test/VNC_Test/ConsolidatedLabel.v3dpbd,4"//for test
 
 //argstr="/Users/otsunah/test/VNC_Test/PreAligned/,"+inputfile+",/Users/otsunah/test/VNC_pipeline/Template/,/Users/otsunah/test/VNC_Test/Sample/"+inputfile+",sr,0.5189163,0.5189163,f,/test/VNC_Test/Sample/ConsolidatedLabel.v3dpbd,8,true"//for test
+
+//for M2 air
+//argstr="/Users/otsunah/test/VNC_aligner/PreAligned/,"+inputfile+",/Users/otsunah/Dropbox\ (HHMI)/VNC_project/VNC_aligner_local_ver/Template/,/Users/otsunah/test/VNC_aligner/sample/"+inputfile+",sr,f,/test/VNC_aligner/Sample/ConsolidatedLabel.v3dpbd,6,true";//for test
+
 
 if(argstr!=0)
 args = split(argstr,",");
@@ -117,8 +122,10 @@ if(filesize>1000000){// if more than 1MB
 	File.saveString(logsum, filepath);
 	
 	cziIndex = lastIndexOf(path, ".czi");
+	nd2Index = lastIndexOf(path, ".nd2");
 	
-	if(cziIndex==-1)
+	
+	if(cziIndex==-1 && nd2Index==-1)
 	open(path);// for tif, comp nrrd, lsm", am, v3dpbd, mha
 	else
 	run("Bio-Formats Importer", "open="+path+" autoscale color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT");
@@ -158,9 +165,6 @@ print("quit does not work! images "+nImages());
 
 //newImage("Untitled", "8-bit black", 360, 490, 2);
 run("quit plugin");
-
-
-
 
 function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,LateralDir,PathConsolidatedLabel,numCPU,path,ShapeAnalysis){
 	
@@ -204,94 +208,118 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 		lsmindex = lastIndexOf(path, ".lsm");
 		cziIndex = lastIndexOf(path, ".czi");
 		h5jindex = lastIndexOf(path, ".h5j");
+		maxmean=0;
 		
-		if(zipIndex==-1 && cziIndex==-1){
-			nc82=0;
+		if(nc82decision=="Signal_amount"){
 			
-			selectWindow(titlelist[titlelist.length-1]);
+			selectImage(titlelist[0]);
+			run("Z Project...", "projection=[Sum Slices]");
+			avetest0=getImageID();
+			getStatistics(area, mean10, min, max, std, histogram);
+			maxmean=mean10;
+			close();
+			
+			selectImage(titlelist[1]);
+			run("Z Project...", "projection=[Sum Slices]");
+			avetest1=getImageID();
+			getStatistics(area, mean20, min, max, std, histogram);
+			if(maxmean<mean20)
+			maxmean=mean20;
+			close();
+			
+			if(channels>=3){
+				selectImage(titlelist[2]);
+				run("Z Project...", "projection=[Sum Slices]");
+				avetest2=getImageID();
+				getStatistics(area, mean30, min, max, std, histogram);
+				if(maxmean<mean30)
+				maxmean=mean30;
+				close();
+			}
+			
+			if(channels==4){
+				selectImage(titlelist[3]);
+				run("Z Project...", "projection=[Sum Slices]");
+				avetest3=getImageID();
+				getStatistics(area, mean40, min, max, std, histogram);
+				if(maxmean<mean40)
+				maxmean=mean40;
+				close();
+			}
+		}//	if(nc82decision=="Signal_amount"){
+		refchannel=0;
+		if(maxmean==mean10 || nc82decision=="ch1"){
+			selectImage(titlelist[0]);
 			nc82=getImageID();
 			
-			for (i=0; i<channels-1; i++) {
-				
-				selectWindow(titlelist[i]);
-				
-				if(titlelist.length>1){
-					if(signal_count==0){
-						neuron=getImageID();
-						neuronTitle[0]=getTitle();
-						signal_count=signal_count+1;
-						print("neuron; "+neuron+"  "+titlelist[i]);
-					}else if(signal_count==1){
-						neuron2=getImageID();
-						print("neuron2; "+neuron2+"  "+titlelist[i]);
-						neuronTitle[1]=getTitle();
-						signal_count=signal_count+1;
-					}else if(signal_count==2){
-						neuron3=getImageID();
-						print("neuron3; "+neuron3+"  "+titlelist[i]);
-						neuronTitle[2]=getTitle();
-						signal_count=signal_count+1;
-					}else if(signal_count==3){
-						neuron4=getImageID();
-						print("neuron4; "+neuron4+"  "+titlelist[i]);
-						neuronTitle[3]=getTitle();
-						signal_count=signal_count+1;
-					}else if(signal_count==4){
-						neuron5=getImageID();
-						print("neuron5; "+neuron5+"  "+titlelist[i]);
-						neuronTitle[4]=getTitle();
-					}
-				}
-			}//for (i=0; i<lengthOf(chanspec); i++) {
-		}//if(zipIndex==-1){
+			selectImage(titlelist[1]);
+			neuron=getImageID();
+			
+			if(channels>=3){
+				selectImage(titlelist[2]);
+				neuron2=getImageID();
+			}
+			if(channels==4){
+				selectImage(titlelist[3]);
+				neuron3=getImageID();
+			}
+			refchannel=1;
+			print("ch1 is reference");
+		}else if (maxmean==mean20 || nc82decision=="ch2"){
+			selectImage(titlelist[1]);
+			nc82=getImageID();
+			
+			selectImage(titlelist[0]);
+			neuron=getImageID();
+			
+			if(channels>=3){
+				selectImage(titlelist[2]);
+				neuron2=getImageID();
+			}
+			if(channels==4){
+				selectImage(titlelist[3]);
+				neuron3=getImageID();
+			}
+			refchannel=2;
+			print("ch2 is reference");
+		}else if (maxmean==mean30 || nc82decision=="ch3"){
+			selectImage(titlelist[2]);
+			nc82=getImageID();
+			
+			selectImage(titlelist[0]);
+			neuron=getImageID();
+			
+			selectImage(titlelist[1]);
+			neuron2=getImageID();
+			
+			if(channels==4){
+				selectImage(titlelist[3]);
+				neuron3=getImageID();
+			}
+			refchannel=3;
+			print("ch3 is reference");
+		}else if (maxmean==mean40 || nc82decision=="ch4"){
+			selectImage(titlelist[3]);
+			nc82=getImageID();
+			
+			selectImage(titlelist[0]);
+			neuron=getImageID();
+			
+			selectImage(titlelist[1]);
+			neuron2=getImageID();
+			
+			selectImage(titlelist[2]);
+			neuron3=getImageID();
+			print("ch4 is reference");
+			refchannel=4;
+		}
 		
 		filepathindex=lastIndexOf(path,"/");
-		
-		if(zipIndex!=-1 || cziIndex!=-1){
-			
-			dotindex=lastIndexOf(path,".");
-			
-			//		noext=substring(path,filepathindex+1,dotindex);
-			
-			print("Zip/CZI positive");
-			selectWindow(titlelist[0]);
-			nc82=getImageID();
-			
-			selectWindow(titlelist[1]);
-			neuronTitle[0]=getTitle();
-			neuron=getImageID();
-			signal_count=signal_count+1;
-			print("neuron; "+neuron+"  "+titlelist[1]);
-		}
-		
-		if(h5jindex!=-1){
-			selectWindow(titlelist[channels-1]);
-			nc82=getImageID();
-		}
 		
 		//	if(lsmindex!=-1)
 		//		noext=substring(path,filepathindex+1,lsmindex);
 		
-		if(FLPOindex!=-1 && lsmindex!=-1){
-			
-			//		noext=substring(noext,0,lsmindex);
-			
-			print("FLPO positive");
-			selectWindow(titlelist[0]);
-			nc82=getImageID();
-			
-			selectWindow(titlelist[1]);
-			neuronTitle[0]=getTitle();
-			neuron=getImageID();
-			signal_count=signal_count+1;
-			
-			selectWindow(titlelist[2]);
-			neuronTitle[1]=getTitle();
-			neuron2=getImageID();
-			signal_count=signal_count+1;
-			
-			print("neuron; "+neuron+"  "+titlelist[1]+"   neuron2; "+neuron2+"  "+titlelist[2]);
-		}
+		print("nc82 channel; "+refchannel);
 		
 		selectImage(nc82);
 		
@@ -1111,7 +1139,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 					//			"do"
 					//			exit();
 					
-
+					
 					while(isOpen(MIPduplicateRotationST)){
 						selectWindow(MIPduplicateRotationST);
 						close();
@@ -2081,7 +2109,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 								if(bitd==8)
 								run("16-bit");
 								
-							//+NextRotation
+								//+NextRotation
 								run("Rotation Hideo headless", "rotate="+maxrotation+" 3d in=InMacro interpolation=BICUBIC cpu="+numCPU+"");
 								run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+OriSampWidth+" pixel_height="+OriSampHeight+" voxel_depth="+OriSampDepth+"");
 							}//	if(rotationOriginal>0){
@@ -2352,7 +2380,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							//			close();
 						}//for(exportchannel=1; exportchannel<=titlelist.length; exportchannel++){
 						
-					//	run("Close All");
+						//	run("Close All");
 						
 						//////// Neuron separtor ConsolidatedLabel.v3dpbdb conversion ////////////////
 						ConsoliExi=File.exists(PathConsolidatedLabel);//neuron separator ConsolidatedLabel
@@ -3160,7 +3188,7 @@ function shapeMeasurement(numCPU,SmeasurementArray){
 					//			exit();
 					
 					run("Rotate... ", "angle="+rotation2+" grid=1 interpolation=None fill enlarge");
-			//		run("Rotation Hideo headless", "rotate="+rotation2+" in=InMacro interpolation=NONE cpu="+numCPU+"");
+					//		run("Rotation Hideo headless", "rotate="+rotation2+" in=InMacro interpolation=NONE cpu="+numCPU+"");
 					
 					run("Make Binary");
 					
