@@ -20,7 +20,7 @@ nc82decision="Signal_amount";//"Signal_amount","ch1","ch2","ch3","ch4"
 // Arguments
 
 argstr=0;
-inputfile="Lgs1NB_140904_Gr89a_TAG_SytHA_GFP_nc82_02_original.h5j";
+inputfile="Les1N_140808_NP0895_TAG_SytHA_GFP_nc82_02_original.h5j";
 
 //argstr="D:"+File.separator+",I1_ZB49_T1,D:"+File.separator+"Dropbox (HHMI)"+File.separator+"VNC_project"+File.separator+"VNC_Lateral_F.tif,C:"+File.separator+"I2_ZB50_T1.v3draw,sr,0.2965237,0.2965237,f"//for test
 
@@ -48,6 +48,7 @@ temptype=args[5];//"f" or "m"
 PathConsolidatedLabel=args[6];// full file path for ConsolidatedLabel.v3dpbd
 numCPU=args[7];
 ShapeAnalysis=args[8];//true or false
+nc82decision=args[9];//"Signal_amount","ch1","ch2","ch3","ch4"
 
 ShapeAnalysis="false";
 
@@ -208,7 +209,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 		lsmindex = lastIndexOf(path, ".lsm");
 		cziIndex = lastIndexOf(path, ".czi");
 		h5jindex = lastIndexOf(path, ".h5j");
-		maxmean=0;
+		maxmean=0; mean10=-1; mean20=-1; mean30=-1; mean40=-1;
 		
 		if(nc82decision=="Signal_amount"){
 			
@@ -702,8 +703,8 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 										}
 										
 										numberResults=1;
-										lowerM=lower; threTry=ThreTry; angle=angleT; SizeM=SizeMT; finalMIP=MIPstep;
-										print("   lowerM; "+lowerM+"   threTry; "+threTry+"   angle; "+angle+"   SizeM; "+SizeM+"   maxARshape; "+maxARshape+"   finalMIP; "+finalMIP);
+										lowerM=lower; ThreTry=ThreTry; angle=angleT; SizeM=SizeMT; finalMIP=MIPstep;
+										print("   lowerM; "+lowerM+"   ThreTry; "+ThreTry+"   angle; "+angle+"   SizeM; "+SizeM+"   maxARshape; "+maxARshape+"   finalMIP; "+finalMIP);
 										
 										logsum=getInfo("log");
 										File.saveString(logsum, filepath);
@@ -782,8 +783,10 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 			donotOperate=0;
 			pretitle=-1; Threstep=10;
 			
-			if(mask1st==mask1stST)
-			donotOperate=0;
+			if(mask1st==mask1stST){
+				donotOperate=0;
+				print("787 donotOperate=0");
+			}
 			
 			if(maxARshape<1.8 && maxARshape!=0)
 			donotOperate=1;
@@ -795,7 +798,12 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 				AIPst=getTitle();
 				ThreTry=3;
 				numberResults=0;
-				print("All 3 thresholding 0 result, connecting with brain, or short VNC");
+				print("All 3 thresholding 0 result, connecting with brain, or short VNC; ThreTry; "+ThreTry);
+				print("Strange nc82 signal");
+				logsum=getInfo("log");
+				File.saveString(logsum, filepath);
+				run("Quit");
+				run("quit plugin");
 			}
 			
 			//	selectImage(mask1st);
@@ -936,7 +944,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 				trynum=trynum+1;
 				
 			}//while(getValue("results.count")==0  && donotOperate==0){
-			print(" 714; nImages; "+nImages+"   maxsize; "+maxsize);
+			print(" 946; nImages; "+nImages+"   maxsize; "+maxsize);
 			
 			if(isOpen(AIP)){
 				selectImage(AIP);
@@ -949,19 +957,22 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 			
 			if(donotOperate==0){
 				
-				if(threTry==0)
+				if(ThreTry==0)
 				ThreMethod="Triangle";
 				
-				if(threTry==1)
+				if(ThreTry==1)
 				ThreMethod="Default";
 				
-				if(threTry==2)
+				if(ThreTry==2)
 				ThreMethod="Huang";
 				
-				if(threTry==3)
+				if(ThreTry==3)
 				ThreMethod="Minimum dark";
 				
-				print("lower thresholding for Br and VNC separation; "+lowerM+"  ThreMethod; "+ThreMethod);
+				if(ThreTry==4)
+				ThreMethod="Minimum dark";
+				
+				print("lower thresholding for Br and VNC separation; "+lowerM+"   ThreTry; "+ThreTry+"  ThreMethod; "+ThreMethod);
 				
 				logsum=getInfo("log");
 				File.saveString(logsum, filepath);

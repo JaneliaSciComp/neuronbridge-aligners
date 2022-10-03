@@ -5,9 +5,10 @@
 
 InputFilePath=$1
 NSLOTS=$2
-FINALOUTPUT=$3
-returnedErrorFilename=$4
-nc82decision="Signal_amount"
+#nc82decision (reference channel) can be one of: "Signal_amount","ch1","ch2","ch3","ch4"
+nc82decision=$3
+FINALOUTPUT=$4
+returnedErrorFilename=$5
 
 InputFileName=$(basename $InputFilePath)
 # final output name is the filename without extension

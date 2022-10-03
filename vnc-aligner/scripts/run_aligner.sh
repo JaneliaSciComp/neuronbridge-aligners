@@ -5,11 +5,13 @@ echo "Run VNC aligner with $*"
 DIR=$(cd "$(dirname "$0")"; pwd)
 
 nslots=2
+reference_channel=Signal_amount
 input_filepath=
 output_dir=
 
 help_cmd="$0 
     --nslots <nslots (default = 2)>
+    --reference-channel <reference channel (default="Signal_amount")>
     --templatedir <template config directory>
     -i <input file stack>
     -o <output directory>
@@ -22,6 +24,12 @@ while [[ $# > 0 ]]; do
     case $key in
         --nslots)
             nslots=$1
+            shift
+            ;;
+        --reference-channel|--reference_channel)
+            if [[ "$1" != "" ]] ; then
+                reference_channel="$1"
+            fi
             shift
             ;;
         --miptemplatedir)
@@ -75,8 +83,8 @@ mkdir -p ${ALIGNMENT_OUTPUT}
 alignmentErrFile=${alignmentErrFile:-"${output_dir}/alignErr.txt"}
 export FINALOUTPUT=${ALIGNMENT_OUTPUT}
 
-echo "~ Run alignment: ${input_filepath} ${nslots} ${FINALOUTPUT} ${alignmentErrFile}"
-/opt/aligner/20x40xVNC_Align_CMTK.sh ${input_filepath} ${nslots} ${FINALOUTPUT} ${alignmentErrFile}
+echo "~ Run alignment: ${input_filepath} ${nslots} ${reference_channel} ${FINALOUTPUT} ${alignmentErrFile}"
+/opt/aligner/20x40xVNC_Align_CMTK.sh ${input_filepath} ${nslots} ${reference_channel} ${FINALOUTPUT} ${alignmentErrFile}
 alignmentExitCode=$?
 
 if [ $alignmentExitCode -ne 0 ]; then
