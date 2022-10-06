@@ -88,7 +88,10 @@ echo "~ Run alignment: ${input_filepath} ${nslots} ${reference_channel} ${FINALO
 alignmentExitCode=$?
 
 if [ $alignmentExitCode -ne 0 ]; then
-    alignmentErr=$(cat "${alignmentErrFile}" || "")
-    echo "Alignment terminated abnormally ${alignmentErr}"
+    echo "Alignment terminated with code ${alignmentExitCode}. Read error file: ${alignmentErrFile}"
+    if [[ -e "${alignmentErrFile}" ]] ; then
+        alignmentErr=$(cat "${alignmentErrFile}" || "")
+        echo "Alignment terminated abnormally ${alignmentErr}"
+    fi
     exit 1
 fi

@@ -135,8 +135,11 @@ echo "~ Run alignment: ${input_filepath} ${nslots} ${xyres} ${zres} ${use_voxel_
 /opt/aligner/20xBrain_Align_CMTK.sh ${input_filepath} ${nslots} ${xyres} ${zres} ${use_voxel_resolution_args} ${reference_channel} ${comparison_alg} ${alignmentErrFile}
 alignmentExitCode=$?
 if [ $alignmentExitCode -ne 0 ]; then
-    alignmentErr=$(cat "${alignmentErrFile}" || "")
-    echo "Alignment terminated abnormally ${alignmentErr}"
+    echo "Alignment terminated with code ${alignmentExitCode}. Read error file: ${alignmentErrFile}"
+    if [[ -e "${alignmentErrFile}" ]] ; then
+        alignmentErr=$(cat "${alignmentErrFile}" || "")
+        echo "Alignment error: ${alignmentErr}"
+    fi
     exit 1
 fi
 
