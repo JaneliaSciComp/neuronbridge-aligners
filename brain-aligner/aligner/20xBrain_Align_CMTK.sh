@@ -403,8 +403,10 @@ generateAllMIPs ${OUTPUT} ${sig} ${MIPS_OUTPUT}
 
 cp $OUTPUT/*.{png,jpg,txt,nrrd} $DEBUG_DIR
 cp -R $OUTPUT/*.xform $DEBUG_DIR
-cp $OUTPUT/*.property $FINALOUTPUT
-cp $OUTPUT/*.nrrd $FINALOUTPUT
+
+echo copy {property,nrrd,jpg,png,avi,txt} to $FINALOUTPUT
+cp $OUTPUT/*.{property,nrrd,jpg,png,avi,txt,yaml} $FINALOUTPUT
+echo copy $MIPS_OUTPUT $FINALOUTPUT
 cp -a $MIPS_OUTPUT $FINALOUTPUT
 
 echo "$0 done"
