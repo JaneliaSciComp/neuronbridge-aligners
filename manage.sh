@@ -3,6 +3,22 @@
 SUDO=
 DOCKER=docker
 
+cmd_opts=()
+
+while [[ $# > 0 ]]; do
+    key="$1"
+    case $key in
+        --cmd-opt)
+            cmd_opts=("${cmd_opts[@]}" "${2}")
+            shift
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
 COMMANDS=$1
 CMDARR=(${COMMANDS//+/ })
 shift 1 # remove command parameter from args
@@ -46,6 +62,8 @@ function readNamespaces {
 
 function buildContainer() {
     local _name=$1
+    shift
+    local -a additional_args=("${@}")
 
     findContainerDirs "${_name}"
 
@@ -70,12 +88,14 @@ function buildContainer() {
             BUILD_ARGS="${BUILD_ARGS} -t ${NAME}"
         fi
 
-        $SUDO $DOCKER build $BUILD_ARGS $cdir
+        $SUDO $DOCKER build $BUILD_ARGS ${additional_args[@]} $cdir
     done
 }
 
 function pushContainer() {
     local _name="$1"
+    shift
+    local -a additional_args=("${@}")
 
     findContainerDirs "${_name}"
 
@@ -90,7 +110,7 @@ function pushContainer() {
 
         if [[ ${#namespaces[@]} -gt 0 ]]; then
             for ns in ${namespaces[@]}; do
-                $SUDO $DOCKER push "${ns}/${NAME}"
+                $SUDO $DOCKER push ${additional_args[@]} "${ns}/${NAME}"
             done
         fi
     done
@@ -107,13 +127,13 @@ for COMMAND in "${CMDARR[@]}" ; do
     case ${COMMAND} in
         build)
             for container_name in "${container_names[@]}"; do
-                buildContainer ${container_name}
+                buildContainer ${container_name} "${cmd_opts[@]}"
             done
             ;;
 
         push)
             for container_name in "${container_names[@]}"; do
-                pushContainer ${container_name}
+                pushContainer ${container_name} "${cmd_opts[@]}"
             done
             ;;
 

@@ -235,11 +235,19 @@ List.clear();
 
 beforeopen=getTime();
 
-if(endsWith(path,"lif")!=1)
-open(path);// for tif, comp nrrd, lsm", am, v3dpbd, mha
-else
-run("Bio-Formats Importer", "open="+path+" autoscale color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT");
 
+if(endsWith(path,"/")!=1){
+	if(endsWith(path,"lif")!=1 && endsWith(path,".oif")!=1)
+	open(path);// for tif, comp nrrd, lsm", am, v3dpbd, mha
+	else
+	run("Bio-Formats Importer", "open="+path+" autoscale color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT");
+}else{
+	print("this is not confocal file");
+	logsum=getInfo("log");
+	File.saveString(logsum, filepath);
+	newImage("Untitled", "8-bit black", 512, 512, 1);
+	run("quit plugin");
+}
 afteropen=getTime();
 
 oriname=getTitle();
@@ -331,6 +339,8 @@ if(channels==1 && nSlices<240){
 	File.saveString(logsum, filepath);
 	
 	run("Quit");
+	newImage("Untitled", "8-bit black", 512, 512, 1);
+	run("quit plugin");
 }
 
 posicolorNum=0;
@@ -388,7 +398,7 @@ if(channels>1){
 		if(channels==4){
 			selectImage(UnknownChannel[3]);
 			run("Z Project...", "projection=[Sum Slices]");
-			avetest2=getImageID();
+			avetest3=getImageID();
 			getStatistics(area, mean40, min, max, std, histogram);
 			if(maxmean<mean40)
 			maxmean=mean40;
@@ -1305,6 +1315,8 @@ if(SizeM!=0){
 						if(getValue("results.count")==0){
 							print("PreAlignerError: Could not detect brain mask in line 1120");
 							run("Quit");
+							newImage("Untitled", "8-bit black", 512, 512, 1);
+							run("quit plugin");
 						}else{
 							
 							AnalyzeCArray=newArray(SizeM, 0, 0);
@@ -2165,6 +2177,8 @@ if(SizeM!=0){
 							logsum=getInfo("log");
 							File.saveString(logsum, filepath);
 							run("Quit");
+							newImage("Untitled", "8-bit black", 512, 512, 1);
+							run("quit plugin");
 						}
 					}else
 					break;
@@ -2184,6 +2198,8 @@ if(SizeM!=0){
 							logsum=getInfo("log");
 							File.saveString(logsum, filepath);
 							run("Quit");
+							newImage("Untitled", "8-bit black", 512, 512, 1);
+							run("quit plugin");
 						}
 					}else
 					break;
@@ -2200,6 +2216,8 @@ if(SizeM!=0){
 							logsum=getInfo("log");
 							File.saveString(logsum, filepath);
 							run("Quit");
+							newImage("Untitled", "8-bit black", 512, 512, 1);
+							run("quit plugin");
 						}
 					}//if(Neuron_SepEXT==1){
 				}//if(neuronNum==startNeuronNum){
@@ -2450,7 +2468,8 @@ File.saveString(logsum, filepath);
 run("Misc...", "divide=Infinity save");
 
 run("Quit");
-
+newImage("Untitled", "8-bit black", 512, 512, 1);
+run("quit plugin");
 
 
 function DupPcreationAndbasicTrans (MaxZoom,DupPcreationAndbasicTransArray, NumCPU, bitd, rotSearch,times){
@@ -3159,6 +3178,18 @@ function ImageCorrelation(ImageCorrelationArray,widthVx,NumCPU,projectionSt,PNGs
 				gapY=abs(preY-maxY);
 				rotGap= abs(preRot-Rot);
 				
+				if(OBJScore>830 && Rot<30 && PreMaxOBJ<OBJScore){
+					bestmaxX=maxX;
+					bestmaxY=maxY;
+					elipsoidAngle=Rot;
+					MaxZoom=iZoom;
+					wholebraindistance=movingdistance;
+					PreMaxOBJ=OBJScore;
+					
+					print("less rotation and high score; "+OBJScore);
+					//break;
+				}
+
 				if(wholebraindistance*2.5>movingdistance || updown==1){
 					
 					absmaxX=abs(maxX);
