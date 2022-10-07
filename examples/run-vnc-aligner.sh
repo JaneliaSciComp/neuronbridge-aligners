@@ -4,7 +4,11 @@ xhost + $localip
 
 FB_MODE_PARAM="-e DISPLAY=$localip:0"
 
-DATA_FILE=JRC_SS04989-20160318_24_A3-f_40x.h5j
+if [ "$#" -ge 1 ]; then
+    DATA_FILE=$1
+else
+    DATA_FILE=JRC_SS04989-20160318_24_A3-f_40x.h5j
+fi
 
 LOCAL_DATA=local/testData
 INPUT="/data/vncData/${DATA_FILE}"
@@ -16,7 +20,7 @@ docker run \
        -it \
        $FB_MODE_PARAM \
        -e TMP=/scratch \
-       registry.int.janelia.org/neuronbridge/vnc-aligner \
+       janeliascicomp/neuronbridge-vncaligner:1.0 \
        /opt/aligner-scripts/run_aligner.sh \
        -debug \
        --miptemplatedir /data/templates \
