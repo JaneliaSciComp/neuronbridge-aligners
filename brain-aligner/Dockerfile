@@ -12,6 +12,12 @@ RUN yum install -y python3-pip && \
     pip3 install --upgrade pip && \
     pip3 install yq
 
+# Prereqs for Fiji
+RUN yum install -y \
+        mesa-libGLU \
+        qt qt-x11 \
+        libXv numactl-libs libXtst-devel libXrender
+
 RUN echo "Installing S3 FUSE and AWS CLI"
 RUN yum install -y fuse-devel s3fs-fuse groff wget unzip less
 
@@ -23,18 +29,13 @@ RUN rm -rf aws*
 
 WORKDIR /opt
 
-# Prereqs for Fiji
-RUN yum install -y \
-        mesa-libGLU \
-        qt qt-x11 \
-        libXv numactl-libs libXtst-devel libXrender
-
 RUN echo "Installing Fiji"
 # Install Fiji
-ENV FIJI_FILE=fiji-linux64.zip
-ENV FIJI_DOWNLOAD_URL=https://downloads.imagej.net/fiji/latest/${FIJI_FILE}
+ENV FIJI_FILE=fiji-1.52c.tgz
+ENV EXTTRACT_CMD="tar xvf"
+ENV FIJI_DOWNLOAD_URL=https://github.com/JaneliaSciComp/tools-archive/releases/download/1.0.0/${FIJI_FILE}
 RUN wget -q --no-check-certificate ${FIJI_DOWNLOAD_URL}
-RUN unzip $FIJI_FILE && \
+RUN ${EXTTRACT_CMD} ${FIJI_FILE} && \
     /bin/rm -rf ${FIJI_FILE} && \
     rm -rf Fiji && \
     mv Fiji.app Fiji
@@ -43,10 +44,12 @@ RUN echo "Installing CMTK"
 # Prereqs for CMTK
 RUN yum install -y fftw-libs-double
 # Install CMTK
-ENV CMTK_FILE=cmtk-20171001-sl7avx.tgz
+ENV CMTK_NAME=cmtk-2.2.6
+ENV CMTK_FILE=cmtk-2.2.6-sl7.tgz
 RUN wget -q https://github.com/JaneliaSciComp/tools-archive/releases/download/1.0.0/${CMTK_FILE}
-RUN tar xvf $CMTK_FILE && /bin/rm -f $CMTK_FILE && \
-    ln -s cmtk-scm-2017-10-01 CMTK
+RUN tar xvf ${CMTK_FILE} && \
+    /bin/rm -f ${CMTK_FILE} && \
+    ln -s ${CMTK_NAME} CMTK
 
 ENV S3_TEMPLATES_MOUNTPOINT=/s3_alignment_templates
 
