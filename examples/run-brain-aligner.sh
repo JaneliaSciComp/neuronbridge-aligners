@@ -14,7 +14,7 @@ if [ $(uname) == 'Linux' ]; then
     xauth nlist $(hostname)/unix:${DISPLAY:1:1} | sed -e 's/^..../ffff/' | xauth -f ${XTEMP} nmerge -
 
     FB_MODE_PARAM="\
-      -e FB_MODE=false \
+      -e FB_MODE=xvfb \
       -e DISPLAY=$DISPLAY \
       -e QT_X11_NO_MITSHM=1 \
       -e XAUTHORITY=${XTEMP} \
@@ -27,21 +27,27 @@ elif [ $(uname) == 'Darwin' ]; then
     # XQuartz must be installed and under Preferences > Security 
     # both "Authenticate connections" and "Allow connections from network clients" must be ON
     echo "Detected Host System: OSX"
-    localip=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
+    localips=$(ifconfig | grep inet | awk '$1=="inet" {print $2}')
+    for localip in $localips; do
+        echo $localip
+        xhost + $localip
+    done
 
-    xhost + $localip
 
-    FB_MODE_PARAM="-e FB_MODE=false -e DISPLAY=$localip:0"
+    FB_MODE_PARAM="-e FB_MODE=xvfb -e DISPLAY=host.docker.internal:0"
 fi
 
+if [ "$#" -ge 1 ]; then
+    DATA_FILE=$1
+else
+    DATA_FILE=Ahana.zip
+fi
 
-DATA_FILE=43LEXAGCaMP6s_for_nBLAST_0003.zip
-
-INPUT="/data/${DATA_FILE}"
-OUTPUT="/data/${DATA_FILE%.*}"
+INPUT="/data/brainData/${DATA_FILE}"
+OUTPUT="/data/brainOutput/${DATA_FILE%.*}"
 
 XYRES=0.55
-ZREZ=1
+ZRES=1
 FORCE=false
 
 docker run \
@@ -50,10 +56,10 @@ docker run \
        -it \
        ${FB_MODE_PARAM} \
        -e TMP=/scratch \
-       -e PREALIGN_TIMEOUT=3600 \
+       -e PREALIGN_TIMEOUT=9000 \
        -e PREALIGN_CHECKINTERVAL=10 \
-       -e ALIGNMENT_MEMORY=10G \
-       registry.int.janelia.org/neuronbridge/neuronbridge-brainaligner:1.0 \
+       -e ALIGNMENT_MEMORY=16G \
+       janeliascicomp/neuronbridge-brainaligner:1.0 \
        /opt/aligner-scripts/run_aligner.sh \
        -debug \
        --forceVxSize ${FORCE} \

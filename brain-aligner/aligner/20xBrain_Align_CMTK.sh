@@ -401,11 +401,20 @@ scoreGen "${sig}_01.nrrd" ${TEMPLATE} "score2018"
 MIPS_OUTPUT=${MIPS_OUTPUT:-"${OUTPUT}/MIP"}
 generateAllMIPs ${OUTPUT} ${sig} ${MIPS_OUTPUT}
 
-cp $OUTPUT/*.{png,jpg,txt,nrrd} $DEBUG_DIR
 cp -R $OUTPUT/*.xform $DEBUG_DIR
+find $OUTPUT \
+  -maxdepth 1 \
+  -regextype posix-extended \
+  -regex ".*\.(png|jpg|txt|nrrd)" \
+  -exec cp {} $DEBUG_DIR \;
 
 echo copy {property,nrrd,jpg,png,avi,txt} to $FINALOUTPUT
-cp $OUTPUT/*.{property,nrrd,jpg,png,avi,txt,yaml} $FINALOUTPUT
+find $OUTPUT \
+  -maxdepth 1 \
+  -regextype posix-extended \
+  -regex ".*\.(property|nrrd|jpg|png|avi|txt|yaml)" \
+  -exec cp {} $FINALOUTPUT \;
+
 echo copy $MIPS_OUTPUT $FINALOUTPUT
 cp -a $MIPS_OUTPUT $FINALOUTPUT
 
