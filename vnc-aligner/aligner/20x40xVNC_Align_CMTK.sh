@@ -21,7 +21,8 @@ OUTPUT="${WORKING_DIR}/Output"
 FINALOUTPUT=${FINALOUTPUT:-"${WORKING_DIR}/FinalOutputs"}
 
 # Tools
-CMTK=/opt/CMTK/bin
+CMTK_HOME=${CMTK_HOME:-"/opt/CMTK"}
+CMTK=${CMTK_HOME}/bin
 FIJI=/opt/Fiji/ImageJ-linux64
 Vaa3D=/opt/Vaa3D/vaa3d
 MACRO_DIR=/opt/aligner/fiji_macros

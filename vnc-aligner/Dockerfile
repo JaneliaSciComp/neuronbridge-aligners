@@ -42,10 +42,33 @@ RUN echo "Installing CMTK"
 # Prereqs for CMTK
 RUN yum install -y fftw-libs-double
 # Install CMTK
+
+# Build CMTK
+RUN yum groups install -y "Development Tools" && \
+    yum install -y fftw-devel cmake git && \
+    mkdir -p /tmp/cmtk && \
+    cd /tmp/cmtk && \
+    git clone https://github.com/jefferis/cmtk.git . && \
+    mkdir core/build && \
+    cd core/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/opt/cmtk_build .. && \
+    make -j 4 install && \
+    mv /opt/cmtk_build/lib/cmtk/bin/* /opt/cmtk_build/bin/ && \
+    rmdir /opt/cmtk_build/lib/cmtk/bin && \
+    cd /opt && \
+    rm -rf /tmp/cmtk/core/build && \
+    yum groups remove -y "Development Tools"
+
+# Download AVX build for CMTK
+ENV CMTK_NAME=cmtk-scm-2017-10-01
 ENV CMTK_FILE=cmtk-20171001-sl7avx.tgz
-RUN wget -q https://github.com/JaneliaSciComp/tools-archive/releases/download/1.0.0/${CMTK_FILE}
-RUN tar xvf $CMTK_FILE && /bin/rm -f $CMTK_FILE && \
-    ln -s cmtk-scm-2017-10-01 CMTK
+
+RUN wget -q https://github.com/JaneliaSciComp/tools-archive/releases/download/1.0.0/${CMTK_FILE} && \
+    tar xvf $CMTK_FILE && \
+    /bin/rm -f $CMTK_FILE && \
+    ln -s ${CMTK_NAME} CMTK
+
+ENV CMTK_HOME=/opt/CMTK
 
 # create mount points for MIP templates and VNC alignment templates
 ENV S3_MIP_TEMPLATES_MOUNTPOINT=/s3_mip_templates
