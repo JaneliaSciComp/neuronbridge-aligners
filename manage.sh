@@ -23,7 +23,7 @@ COMMANDS=$1
 CMDARR=(${COMMANDS//+/ })
 shift 1 # remove command parameter from args
 
-container_names="${@}"
+container_names=("${@}")
 
 helpmsg="
 $0 COMMAND <containers>
@@ -127,12 +127,14 @@ for COMMAND in "${CMDARR[@]}" ; do
     case ${COMMAND} in
         build)
             for container_name in "${container_names[@]}"; do
+                echo "Build ${container_name}"
                 buildContainer ${container_name} "${cmd_opts[@]}"
             done
             ;;
 
         push)
             for container_name in "${container_names[@]}"; do
+                echo "Push ${container_name}"
                 pushContainer ${container_name} "${cmd_opts[@]}"
             done
             ;;
