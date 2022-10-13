@@ -32,9 +32,11 @@ RUN yum install -y \
 
 RUN echo "Installing Fiji"
 # Install Fiji
-ENV FIJI_FILE=fiji-1.52c.tgz
-RUN wget -q https://github.com/JaneliaSciComp/tools-archive/releases/download/1.0.0/${FIJI_FILE}
-RUN tar xvf $FIJI_FILE && /bin/rm -rf ${FIJI_FILE} && \
+ENV FIJI_FILE=fiji-linux64.zip
+ENV EXTTRACT_CMD="unzip"
+RUN wget -q --no-check-certificate https://downloads.imagej.net/fiji/latest/${FIJI_FILE}
+RUN ${EXTTRACT_CMD} $FIJI_FILE && \
+    /bin/rm -rf ${FIJI_FILE} && \
     rm -rf Fiji && \
     mv Fiji.app Fiji
 
