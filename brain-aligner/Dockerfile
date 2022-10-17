@@ -45,22 +45,6 @@ RUN echo "Installing CMTK"
 RUN yum install -y fftw-libs-double
 # Install CMTK
 
-# Build CMTK
-RUN yum groups install -y "Development Tools" && \
-    yum install -y fftw-devel cmake git && \
-    mkdir -p /tmp/cmtk && \
-    cd /tmp/cmtk && \
-    git clone https://github.com/jefferis/cmtk.git . && \
-    mkdir core/build && \
-    cd core/build && \
-    cmake -DCMAKE_INSTALL_PREFIX=/opt/cmtk_build .. && \
-    make -j 4 install && \
-    mv /opt/cmtk_build/lib/cmtk/bin/* /opt/cmtk_build/bin/ && \
-    rmdir /opt/cmtk_build/lib/cmtk/bin && \
-    cd /opt && \
-    rm -rf /tmp/cmtk/core/build && \
-    yum groups remove -y "Development Tools"
-
 # Download AVX2 build for CMTK
 ENV CMTK_NAME=cmtk-20190116-sl7avx2
 ENV CMTK_FILE=cmtk-20190116-sl7avx2.tgz
