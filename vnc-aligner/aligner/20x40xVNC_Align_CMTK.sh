@@ -444,7 +444,11 @@ MIPS_OUTPUT=${MIPS_OUTPUT:-"${OUTPUT}/MIP"}
 
 for ((ii=1; ii<=4; ii++)); do
     if [[ -e "${sig}_0${ii}.nrrd" ]]; then
-        $FIJI --headless -macro ${MIPGENERATION} "${OUTPUT}/,${sig}_0"$ii".nrrd,${MIPS_OUTPUT}/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
+        mipCmdArgs="${OUTPUT}/,${sig}_0${ii}.nrrd,${MIPS_OUTPUT}/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
+        mipsCmd="$FIJI --headless -macro ${MIPGENERATION} ${mipCmdArgs}"
+        echo "Generate MIPS for channel ${ii}: ${mipsCmd}"
+        ${mipsCmd}
+        echo "Finished generating MIPS for channel ${ii}: ${mipsCmd}"
     fi
 done
 
