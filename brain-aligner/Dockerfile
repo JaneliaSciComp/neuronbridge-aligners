@@ -12,14 +12,9 @@ RUN yum install -y python3-pip && \
     pip3 install --upgrade pip && \
     pip3 install yq
 
-# Prereqs for Fiji
-RUN yum install -y \
-        mesa-libGLU \
-        qt qt-x11 \
-        libXv numactl-libs libXtst-devel libXrender
-
 RUN echo "Installing S3 FUSE and AWS CLI"
-RUN yum install -y fuse-devel s3fs-fuse groff wget unzip less
+RUN yum install -y fuse-devel s3fs-fuse \
+        groff wget tar unzip less
 
 WORKDIR /awsinstall
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -29,11 +24,15 @@ RUN rm -rf aws*
 
 WORKDIR /opt
 
+# Prereqs for Fiji
+RUN yum install -y \
+        mesa-libGLU libXtst-devel libXrender
+
 RUN echo "Installing Fiji"
 # Install Fiji
 ENV FIJI_FILE=fiji-1.52c.tgz
+ENV FIJI_DOWNLOAD_URL=http://workstation.int.janelia.org/files/fiji/${FIJI_FILE}
 ENV EXTTRACT_CMD="tar xvf"
-ENV FIJI_DOWNLOAD_URL=https://github.com/JaneliaSciComp/tools-archive/releases/download/1.0.0/${FIJI_FILE}
 RUN wget -q --no-check-certificate ${FIJI_DOWNLOAD_URL}
 RUN ${EXTTRACT_CMD} ${FIJI_FILE} && \
     /bin/rm -rf ${FIJI_FILE} && \
@@ -69,7 +68,6 @@ ENV FB_MODE=
 # copy alignment scripts
 COPY aligner /opt/aligner
 COPY scripts /opt/aligner-scripts
-COPY cwls /etc/cwls
 
 RUN chmod 755 /opt/aligner/*.sh
 RUN chmod 755 /opt/aligner-scripts/*.sh
