@@ -39,6 +39,7 @@ fi
 
 if [ "$#" -ge 1 ]; then
     DATA_FILE=$1
+    shift
 else
     DATA_FILE=Ahana.zip
 fi

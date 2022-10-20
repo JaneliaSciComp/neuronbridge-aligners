@@ -6,6 +6,7 @@ FB_MODE_PARAM="-e DISPLAY=$localip:0"
 
 if [ "$#" -ge 1 ]; then
     DATA_FILE=$1
+    shift
 else
     DATA_FILE=JRC_SS04989-20160318_24_A3-f_40x.h5j
 fi
