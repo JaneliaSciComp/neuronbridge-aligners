@@ -25,16 +25,19 @@ RUN rm -rf aws*
 WORKDIR /opt
 
 # Prereqs for Fiji
+RUN yum localinstall --nogpgcheck -y https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm && \
+    yum install -y ffmpeg
+
 RUN yum install -y \
         mesa-libGLU libXtst-devel libXrender
 
 RUN echo "Installing Fiji"
 # Install Fiji
-ENV FIJI_FILE=fiji-1.52c.tgz
-ENV FIJI_DOWNLOAD_URL=http://workstation.int.janelia.org/files/fiji/${FIJI_FILE}
-ENV EXTTRACT_CMD="tar xvf"
+ENV FIJI_FILE=fiji-linux64.zip
+ENV FIJI_DOWNLOAD_URL=https://downloads.imagej.net/fiji/latest/${FIJI_FILE}
+ENV EXTTRACT_CMD="unzip"
 RUN wget -q --no-check-certificate ${FIJI_DOWNLOAD_URL}
-RUN ${EXTTRACT_CMD} ${FIJI_FILE} && \
+RUN ${EXTTRACT_CMD} $FIJI_FILE && \
     /bin/rm -rf ${FIJI_FILE} && \
     rm -rf Fiji && \
     mv Fiji.app Fiji

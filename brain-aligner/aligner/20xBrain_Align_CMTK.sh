@@ -59,6 +59,8 @@ TWELVEBITCONV="${MACRO_DIR}/12bit_Conversion.ijm"
 SCOREGENERATION="${MACRO_DIR}/Score_Generator_Cluster.ijm"
 REGCROP="${MACRO_DIR}/TempCrop_after_affine.ijm"
 
+FIJI_OPTS="--ij2 --mem ${memResource} --info --dont-patch-ij1 --no-splash"
+
 BrainShape="Both_OL_missing (40x)"
 objective="20x"
 templateBr="JRC2018"
@@ -173,6 +175,7 @@ function checkTimeout() {
     while ps ${psflags} ; do
         if [ ${runningTime} -ge ${timeoutVal} ]; then
             ${errHandler}
+            echo "Kill the process after ${runningTime} seconds"
             kill -9 $cpid
             break
         else
@@ -235,17 +238,16 @@ if [[ -e ${OLSHAPE} && -e ${METADATA} ]]; then
     echo "Already exists: ${OLSHAPE} and ${METADATA}"
 else
     preprocessingParams="${OUTPUT}/,${InputName}.,${InputFilePath},${TemplatesDir},${RESX},${RESZ},${NSLOTS},${objective},${templateBr},${BrainShape},${Unaligned_Neuron_Separator_Result_V3DPBD},${ForceUseVxSize},${referenceChannel},${comparisonAlg}"
-    fijiOpts="--ij2 --mem ${memResource} --info --no-splash"
     echo "+---------------------------------------------------------------------------------------+"
     echo "| Running OtsunaBrain preprocessing step"
-    echo "| ${FIJI} ${fijiOpts} -macro ${PREPROCIMG} \"${preprocessingParams}\""
+    echo "| ${FIJI} ${FIJI_OPTS} -macro ${PREPROCIMG} \"${preprocessingParams}\""
     echo "+---------------------------------------------------------------------------------------+"
     START=`date '+%F %T'`
     # Start the preprocessing in background and then wait until it finishes or times out.
     # Note that this macro does not seem to work in --headless mode
     PREALIGN_TIMEOUT=$((${PREALIGN_TIMEOUT:-9000}))
     PREALIGN_CHECKINTERVAL=$((${PREALIGN_CHECKINTERVAL:-60}))
-    (${FIJI} ${fijiOpts} -macro ${PREPROCIMG} "${preprocessingParams}" > ${DEBUG_DIR}/preproc.log 2>&1) &
+    (${FIJI} "${FIJI_OPTS}" -macro ${PREPROCIMG} "${preprocessingParams}" > ${DEBUG_DIR}/preproc.log 2>&1) &
     fpid=$!
 
     function prealignTimeoutHandler {
@@ -292,7 +294,7 @@ else
         echo "~ Preprocessing log"
         cat ${LOGFILE}
         echo "~ Preprocessing error: ${ALIGNMENT_ERROR}"
-        echo ${ALIGNMENT_ERROR} > ${returnedErrorFilename} 
+        echo ${ALIGNMENT_ERROR} >> ${returnedErrorFilename}
         exit 1
     elif [[ ${DEBUG_MODE} =~ "debug" ]]; then
         echo "~ Preprocessing output"
@@ -349,8 +351,11 @@ else
     gsig=${gloval_nc82_nrrd}
     iniT=${JRC2018_Unisexgen1CROPPED}
 
+    echo "Run: $CMTK/reformatx -o $sig --floating $gsig $TEMP $DEFFIELD"
     $CMTK/reformatx -o "$sig" --floating $gsig $TEMP $DEFFIELD
-    $FIJI -macro $REGCROP "$TEMP,$sig,$NSLOTS"
+
+    echo "Run: $FIJI ${FIJI_OPTS} -macro $REGCROP \"$TEMP,$sig,$NSLOTS\""
+    $FIJI "${FIJI_OPTS}" -macro $REGCROP "$TEMP,$sig,$NSLOTS"
 fi
 
 # CMTK warping

@@ -32,9 +32,8 @@ elif [ $(uname) == 'Darwin' ]; then
         echo $localip
         xhost + $localip
     done
-
-
-    FB_MODE_PARAM="-e FB_MODE=xvfb -e DISPLAY=host.docker.internal:0"
+    FB_MODE=${FB_MODE:-"xvfb"}
+    FB_MODE_PARAM="-e FB_MODE=${FB_MODE} -e DISPLAY=host.docker.internal:0"
 fi
 
 if [ "$#" -ge 1 ]; then
@@ -57,6 +56,7 @@ docker run \
        -it \
        ${FB_MODE_PARAM} \
        -e TMP=/scratch \
+       -e TMPDIR=/scratch \
        -e PREALIGN_TIMEOUT=9000 \
        -e PREALIGN_CHECKINTERVAL=10 \
        -e ALIGNMENT_MEMORY=16G \

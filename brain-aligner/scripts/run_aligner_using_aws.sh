@@ -253,7 +253,13 @@ export alignmentErrFile="${results_dir}/alignErr.txt"
 /opt/aligner-scripts/run_aligner.sh "${run_align_cmd_args[@]}"
 alignment_exit_code=$?
 if [[ "${alignment_exit_code}" != "0" ]] ; then
-    alignmentErr=$(cat "${alignmentErrFile}" || "")
+    if [[ -e "${alignmentErrFile}" ]] ; then
+        alignmentErr=$(cat "${alignmentErrFile}" || "")
+        echo "Alignment error: ${alignmentErr}"
+    else
+        echo "Exit with error (${alignment_exit_code}) but could not find alignment error file: ${alignmentErrFile}"
+        alignmentErr=''
+    fi
     echo "Alignment exited with ${alignment_exit_code}: ${alignmentErr}";
     if [[ ! -z "${alignmentErr}" ]]; then
         errorMessage=${alignmentErr}

@@ -21,6 +21,7 @@ docker run \
        -it \
        $FB_MODE_PARAM \
        -e TMP=/scratch \
+       -e TMPDIR=/scratch \
        janeliascicomp/neuronbridge-vncaligner:1.0 \
        /opt/aligner-scripts/run_aligner.sh \
        -debug \
