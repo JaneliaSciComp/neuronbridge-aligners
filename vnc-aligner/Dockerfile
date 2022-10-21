@@ -13,7 +13,8 @@ RUN yum install -y python3-pip && \
     pip3 install yq
 
 RUN echo "Installing S3 FUSE and AWS CLI"
-RUN yum install -y fuse-devel s3fs-fuse groff-base wget tar unzip less
+RUN yum install -y fuse-devel s3fs-fuse \
+        groff wget tar unzip less
 
 WORKDIR /awsinstall
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -24,17 +25,18 @@ RUN rm -rf aws*
 WORKDIR /opt
 
 # Prereqs for Fiji
+RUN yum localinstall --nogpgcheck -y https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm && \
+    yum install -y ffmpeg
+
 RUN yum install -y \
-        alsa-lib \
-        mesa-libGLU \
-        qt qt-x11 \
-        libXv numactl-libs libXtst-devel libXrender
+        mesa-libGLU libXtst-devel libXrender
 
 RUN echo "Installing Fiji"
 # Install Fiji
 ENV FIJI_FILE=fiji-linux64.zip
+ENV FIJI_DOWNLOAD_URL=https://downloads.imagej.net/fiji/latest/${FIJI_FILE}
 ENV EXTTRACT_CMD="unzip"
-RUN wget -q --no-check-certificate https://downloads.imagej.net/fiji/latest/${FIJI_FILE}
+RUN wget -q --no-check-certificate ${FIJI_DOWNLOAD_URL}
 RUN ${EXTTRACT_CMD} $FIJI_FILE && \
     /bin/rm -rf ${FIJI_FILE} && \
     rm -rf Fiji && \
@@ -50,8 +52,8 @@ ENV CMTK_NAME=cmtk-20190116-sl7avx2
 ENV CMTK_FILE=cmtk-20190116-sl7avx2.tgz
 
 RUN wget -q https://github.com/JaneliaSciComp/tools-archive/releases/download/1.0.0/${CMTK_FILE} && \
-    tar xvf $CMTK_FILE && \
-    /bin/rm -f $CMTK_FILE && \
+    tar xvf ${CMTK_FILE} && \
+    /bin/rm -f ${CMTK_FILE} && \
     ln -s ${CMTK_NAME} CMTK
 
 ENV CMTK_HOME=/opt/CMTK
