@@ -104,12 +104,11 @@ echo "Create working directory ${WORKING_DIR}"
 mkdir -p ${WORKING_DIR}
 cd ${WORKING_DIR}
 
-JAVA_PREFS_DIR="${WORKING_DIR}/.java"
-echo "Set java preferences directory to ${JAVA_PREFS_DIR}"
-mkdir -p "${JAVA_PREFS_DIR}/sprefs"
-mkdir -p "${JAVA_PREFS_DIR}/uprefs"
+# set user directory to the working directory
+JAVA_USER_DIR="${WORKING_DIR}"
+echo "Set java user directory to ${JAVA_USER_DIR}"
 
-export JAVA_OPTS="-Djava.util.prefs.systemRoot=${JAVA_PREFS_DIR}/sprefs -Djava.util.prefs.userRoot=${JAVA_PREFS_DIR}/uprefs"
+export JAVA_TOOL_OPTIONS="-Duser.home=${JAVA_USER_DIR}"
 
 function cleanTemp {
     if [[ "${DEBUG_MODE}" =~ "debug" ]]; then

@@ -59,6 +59,7 @@ TWELVEBITCONV="${MACRO_DIR}/12bit_Conversion.ijm"
 SCOREGENERATION="${MACRO_DIR}/Score_Generator_Cluster.ijm"
 REGCROP="${MACRO_DIR}/TempCrop_after_affine.ijm"
 
+memResource=${ALIGNMENT_MEMORY:-"2G"}
 FIJI_OPTS="--ij2 --mem ${memResource} --info --dont-patch-ij1 --no-splash"
 
 BrainShape="Both_OL_missing (40x)"
@@ -131,13 +132,13 @@ function scoreGen() {
     else
         echo "+---------------------------------------------------------------------------------------+"
         echo "| Running Score generation"
-        echo "| $FIJI --headless -macro ${SCOREGENERATION} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}"
+        echo "| $FIJI --ij2 --mem ${memResource} --headless -macro ${SCOREGENERATION} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}"
         echo "+---------------------------------------------------------------------------------------+"
 
         START=`date '+%F %T'`
         # Expect to take far less than 1 hour
 	    # Alignment Score generation:ZNCC can run in headless mode (no X11 needed)	
-        $FIJI --headless -macro ${SCOREGENERATION} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}
+        $FIJI --ij2 --mem ${memResource} --headless -macro ${SCOREGENERATION} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}
         STOP=`date '+%F %T'`
 
         echo "ZNCC JRC2018 score generation start: $START"
@@ -154,7 +155,7 @@ function generateAllMIPs() {
     echo "Generate MIPs for all signal channels to ${_mipsOutput}"
     for ((i=1; i<=$NCHANNELS; i++)); do
         mipCmdArgs="${_sigDir}/,${_sigBaseName}_0${i}.nrrd,${_mipsOutput}/,${TemplatesDir}/,${area}"
-        mipsCmd="$FIJI --headless -macro ${MIPGENERATION} ${mipCmdArgs}"
+        mipsCmd="$FIJI --ij2 --mem ${memResource} --headless -macro ${MIPGENERATION} ${mipCmdArgs}"
         echo "Generate MIPS for channel ${i}: ${mipsCmd}"
         ${mipsCmd}
         echo "Generated MIPS for channel ${i}"
@@ -233,7 +234,6 @@ registered_warp_xform="${OUTPUT}/warp.xform"
 OLSHAPE="${OUTPUT}/OL_shape.txt"
 METADATA="${OUTPUT}/metadata.yaml"
 
-memResource=${ALIGNMENT_MEMORY:-"2G"}
 if [[ -e ${OLSHAPE} && -e ${METADATA} ]]; then
     echo "Already exists: ${OLSHAPE} and ${METADATA}"
 else
@@ -384,9 +384,9 @@ rm $JRC2018_Unisexgen1CROPPED
 echo " "
 echo "+----------------------------------------------------------------------+"
 echo "| 12-bit conversion"
-echo "| $FIJI -macro $TWELVEBITCONV \"${OUTPUT}/,${InputName}_01.nrrd,${gloval_nc82_nrrd}\""
+echo "| $FIJI --ij2 --mem ${memResource} --headless -macro $TWELVEBITCONV \"${OUTPUT}/,${InputName}_01.nrrd,${gloval_nc82_nrrd}\""
 echo "+----------------------------------------------------------------------+"
-$FIJI --headless -macro $TWELVEBITCONV "${OUTPUT}/,${InputName}_01.nrrd,${gloval_nc82_nrrd}"
+$FIJI --ij2 --mem ${memResource} --headless -macro $TWELVEBITCONV "${OUTPUT}/,${InputName}_01.nrrd,${gloval_nc82_nrrd}"
 
 ########################################################################################################
 # JFRC2018 Unisex High-resolution (for color depth search) reformat

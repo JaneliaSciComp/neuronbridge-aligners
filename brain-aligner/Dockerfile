@@ -71,6 +71,7 @@ ENV FB_MODE=
 # copy alignment scripts
 COPY aligner /opt/aligner
 COPY scripts /opt/aligner-scripts
+COPY IJ_Prefs.txt /opt/Fiji/IJ_Prefs.txt
 
 RUN chmod 755 /opt/aligner/*.sh
 RUN chmod 755 /opt/aligner-scripts/*.sh
