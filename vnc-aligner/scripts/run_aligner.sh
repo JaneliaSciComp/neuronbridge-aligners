@@ -77,6 +77,12 @@ echo "Create working directory ${WORKING_DIR}"
 mkdir -p ${WORKING_DIR}
 cd ${WORKING_DIR}
 
+# set user directory to the working directory
+JAVA_USER_DIR="${WORKING_DIR}"
+echo "Set java user directory to ${JAVA_USER_DIR}"
+
+export JAVA_TOOL_OPTIONS="-Duser.home=${JAVA_USER_DIR}"
+
 ALIGNMENT_OUTPUT=${ALIGNMENT_OUTPUT:-"${output_dir}/aligned"}
 mkdir -p ${ALIGNMENT_OUTPUT}
 
