@@ -86,6 +86,8 @@ if(JFRCexist==0){
 	File.saveString(logsum, filepath);
 	
 	run("Quit");
+	newImage("Untitled", "8-bit black", 512, 512, 1);
+	run("quit plugin");
 }
 
 
@@ -113,7 +115,7 @@ end=getTime();
 print((end-startT)/1000+" sec");
 
 run("Quit");
-
+run("quit plugin");
 
 
 /////////Function//////////////////////////////////////////////////////////////////
@@ -156,6 +158,8 @@ function mipfunction(dir,DataName, dirCOLOR, AutoBRV,MIPtype,desiredmean,CropYN,
 			logsum=getInfo("log");
 			File.saveString(logsum, filepath);
 			run("Quit");
+			newImage("Untitled", "8-bit black", 512, 512, 1);
+			run("quit plugin");
 		}
 		
 		print(DataName+"  opened");
@@ -165,6 +169,8 @@ function mipfunction(dir,DataName, dirCOLOR, AutoBRV,MIPtype,desiredmean,CropYN,
 		
 		File.saveString(logsum, filepath);
 		run("Quit");
+		newImage("Untitled", "8-bit black", 512, 512, 1);
+		run("quit plugin");
 	}
 	//	}else{
 	//		print("file size is too small, "+filesize/10000000+" MB, less than 60MB.  "+listP+"	 ;	 "+i+" / "+endn);
@@ -851,7 +857,6 @@ function mipfunction(dir,DataName, dirCOLOR, AutoBRV,MIPtype,desiredmean,CropYN,
 		}//if(colorcoding==1){
 		
 	}//	for(MIPtry=1; MIPtry<=imageNum; MIPtry++){
-	run("Close All");
 } //function mipfunction(mipbatch) { 
 ///////////////////////////////////////////////////////////////
 function autobradjustment(briadj,DSLTver,DefMaxValue){
@@ -2499,6 +2504,8 @@ function fileOpen(FilePathArray,filepath){
 				logsum=getInfo("log");
 				File.saveString(logsum, filepath);
 				run("Quit");
+				newImage("Untitled", "8-bit black", 512, 512, 1);
+				run("quit plugin");
 			}
 			
 			if(tempmaskEXI==1){
@@ -2514,6 +2521,8 @@ function fileOpen(FilePathArray,filepath){
 						logsum=getInfo("log");
 						File.saveString(logsum, filepath);
 						run("Quit");
+						newImage("Untitled", "8-bit black", 512, 512, 1);
+						run("quit plugin");
 					}
 				}
 			}
@@ -2539,6 +2548,8 @@ function fileOpen(FilePathArray,filepath){
 						logsum=getInfo("log");
 						File.saveString(logsum, filepath);
 						run("Quit");
+						newImage("Untitled", "8-bit black", 512, 512, 1);
+						run("quit plugin");
 					}
 				}
 				
@@ -2548,6 +2559,8 @@ function fileOpen(FilePathArray,filepath){
 				logsum=getInfo("log");
 				File.saveString(logsum, filepath);
 				run("Quit");
+				newImage("Untitled", "8-bit black", 512, 512, 1);
+				run("quit plugin");
 			}
 		}
 	}//if(isOpen("JFRC2013_63x_Tanya.nrrd")){
