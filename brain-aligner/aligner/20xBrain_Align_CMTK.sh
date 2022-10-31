@@ -407,6 +407,16 @@ scoreGen "${sig}_01.nrrd" ${TEMPLATE} "score2018"
 MIPS_OUTPUT=${MIPS_OUTPUT:-"${OUTPUT}/MIP"}
 generateAllMIPs ${OUTPUT} ${sig} ${MIPS_OUTPUT}
 
+for fin in ${OUTPUT}/*.avi; do
+    fout=${fin%.avi}.mp4
+    echo "ffmpeg -y -r 7 -i ${fin} -vcodec libx264 -b:v 2000000 -preset slow -tune film -pix_fmt yuv420p ${fout}"
+    ffmpeg -y -r 7 -i \
+           "$fin" -vcodec libx264 \
+           -b:v 2000000 -preset slow \
+           -tune film -pix_fmt yuv420p "$fout" && \
+    rm $fin
+done
+
 cp -R $OUTPUT/*.xform $DEBUG_DIR
 find $OUTPUT \
   -maxdepth 1 \
@@ -414,11 +424,11 @@ find $OUTPUT \
   -regex ".*\.(png|jpg|txt|nrrd)" \
   -exec cp {} $DEBUG_DIR \;
 
-echo copy {property,nrrd,jpg,png,avi,txt} to $FINALOUTPUT
+echo copy {property,nrrd,jpg,png,mp4,txt} to $FINALOUTPUT
 find $OUTPUT \
   -maxdepth 1 \
   -regextype posix-extended \
-  -regex ".*\.(property|nrrd|jpg|png|avi|txt|yaml)" \
+  -regex ".*\.(property|nrrd|jpg|png|mp4|txt|yaml)" \
   -exec cp {} $FINALOUTPUT \;
 
 echo copy $MIPS_OUTPUT $FINALOUTPUT
