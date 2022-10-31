@@ -281,7 +281,7 @@ for mip in `ls ${MIPS_OUTPUT}/*.{tif,png,jpg}` ; do
 done
 
 # copy additional results to the s3 output
-for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -regex ".*\.(txt|jpg|png|avi|yaml)"` ; do
+for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -regex ".*\.(txt|jpg|png|mp4|yaml)"` ; do
     aresult_name=$(basename $aresult)
     aws s3 cp ${aresult} s3://${outputs_s3bucket_name}/${output_dir}/alignment_results/${aresult_name}
 done
