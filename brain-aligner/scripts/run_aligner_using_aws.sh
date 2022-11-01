@@ -115,18 +115,23 @@ function updateSearch() {
     local searchId=${args[0]}
     local -i searchStep=${args[1]}
     local -i with_ts=${args[2]}
-    local -i nMips=${args[3]}
+    local alignmentMovieParam=${args[3]}
+    local -i nMips=${args[4]}
     local -a mipsParam
     if [ $nMips -eq 0 ] ; then
         mipsParam=()
     else
-        mipsParam=("${args[@]:4:$nMips}")
+        mipsParam=("${args[@]:5:$nMips}")
     fi
-    local errorMessage=${args[4+$nMips]}
+    local errorMessage=${args[5+$nMips]}
 
     local alignedTimestamp=
     if [[ ${with_ts} == 1 ]] ; then
         alignedTimestamp=`date --utc +%FT%TZ`
+    fi
+    local alignmentMovie=
+    if [[ ${alignmentMovieParam} != "None" ]] ; then
+        alignmentMovie=${alignmentMovieParam}
     fi
 
     echo "Update Search Params: \
@@ -135,6 +140,7 @@ function updateSearch() {
         alignFinished: ${alignedTimestamp} \
         nMips: ${nMips} \
         mips: ${mipsParam[@]} \
+        alignmentMovie: ${alignmentMovieParam} \
         errors: ${errorMessage}"
 
     # Update the search if a searchId is passed
@@ -153,7 +159,8 @@ function updateSearch() {
                 \"step\": ${searchStep},
                 \"alignFinished\": \"${alignedTimestamp}\",
                 \"computedMIPs\": [ ${mipsList} ],
-                \"uploadThumbnail\": \"${thumbnail}\"
+                \"uploadThumbnail\": \"${thumbnail}\",
+                \"alignmentMovie\": \"${alignmentMovie}\"
             }"
         else
             searchData="{
@@ -238,8 +245,10 @@ export ALIGNMENT_OUTPUT="${results_dir}/alignment_results"
 export MIPS_OUTPUT="${results_dir}/mips"
 
 declare -a mips=()
+alignmentMovie="None"
+
 echo "Set alignment in progress for ${searchId}: ${mips[@]}"
-updateSearch "${searchId}" 1 0 ${#mips[@]} "${mips[@]}"
+updateSearch "${searchId}" 1 0 ${alignmentMovie} ${#mips[@]} "${mips[@]}"
 
 run_align_cmd_args=(
     ${templates_dir_arg}
@@ -266,7 +275,7 @@ if [[ "${alignment_exit_code}" != "0" ]] ; then
     else
         errorMessage="Alignment failed with exit code ${alignment_exit_code}"
     fi
-    updateSearch "${searchId}" 1 0 ${#mips[@]} "${mips[@]}" "${errorMessage}"
+    updateSearch "${searchId}" 1 0 ${alignmentMovie} ${#mips[@]} "${mips[@]}" "${errorMessage}"
     exit $alignment_exit_code
 fi
 
@@ -283,11 +292,14 @@ done
 # copy additional results to the s3 output
 for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -regex ".*\.(txt|jpg|png|mp4|yaml)"` ; do
     aresult_name=$(basename $aresult)
+    if [[ ${aresult_name} == *.mp4 ]] ; then
+        alignmentMovie="alignment_results/${aresult_name}"
+    fi
     aws s3 cp ${aresult} s3://${outputs_s3bucket_name}/${output_dir}/alignment_results/${aresult_name}
 done
 
 echo "Set alignment to completed for ${searchId}: ${mips[@]}"
-updateSearch "${searchId}" 2 1 ${#mips[@]} "${mips[@]}"
+updateSearch "${searchId}" 2 1 ${alignmentMovie} ${#mips[@]} "${mips[@]}"
 
 if [[ "${DEBUG_MODE}" != "debug" ]] ; then
     echo "Remove working input copy: ${working_input_filepath}"
