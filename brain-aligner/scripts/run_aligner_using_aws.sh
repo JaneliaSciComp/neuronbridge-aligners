@@ -116,14 +116,15 @@ function updateSearch() {
     local -i searchStep=${args[1]}
     local -i with_ts=${args[2]}
     local alignmentMovieParam=${args[3]}
-    local -i nMips=${args[4]}
+    local alignmentScore=${args[4]}
+    local -i nMips=${args[5]}
     local -a mipsParam
     if [ $nMips -eq 0 ] ; then
         mipsParam=()
     else
-        mipsParam=("${args[@]:5:$nMips}")
+        mipsParam=("${args[@]:6:$nMips}")
     fi
-    local errorMessage=${args[5+$nMips]}
+    local errorMessage=${args[6+$nMips]}
 
     local alignedTimestamp=
     if [[ ${with_ts} == 1 ]] ; then
@@ -141,6 +142,7 @@ function updateSearch() {
         nMips: ${nMips} \
         mips: ${mipsParam[@]} \
         alignmentMovie: ${alignmentMovieParam} \
+        alignmentScore: ${alignmentScore} \
         errors: ${errorMessage}"
 
     # Update the search if a searchId is passed
@@ -160,7 +162,8 @@ function updateSearch() {
                 \"alignFinished\": \"${alignedTimestamp}\",
                 \"computedMIPs\": [ ${mipsList} ],
                 \"uploadThumbnail\": \"${thumbnail}\",
-                \"alignmentMovie\": \"${alignmentMovie}\"
+                \"alignmentMovie\": \"${alignmentMovie}\",
+                \"alignmentScore\": \"${alignmentScore}\"
             }"
         else
             searchData="{
@@ -246,9 +249,10 @@ export MIPS_OUTPUT="${results_dir}/mips"
 
 declare -a mips=()
 alignmentMovie="None"
+alignmentScore="0"
 
 echo "Set alignment in progress for ${searchId}: ${mips[@]}"
-updateSearch "${searchId}" 1 0 ${alignmentMovie} ${#mips[@]} "${mips[@]}"
+updateSearch "${searchId}" 1 0 ${alignmentMovie} ${alignmentScore} ${#mips[@]} "${mips[@]}"
 
 run_align_cmd_args=(
     ${templates_dir_arg}
@@ -275,7 +279,7 @@ if [[ "${alignment_exit_code}" != "0" ]] ; then
     else
         errorMessage="Alignment failed with exit code ${alignment_exit_code}"
     fi
-    updateSearch "${searchId}" 1 0 ${alignmentMovie} ${#mips[@]} "${mips[@]}" "${errorMessage}"
+    updateSearch "${searchId}" 1 0 ${alignmentMovie} ${alignmentScore} ${#mips[@]} "${mips[@]}" "${errorMessage}"
     exit $alignment_exit_code
 fi
 
@@ -290,16 +294,21 @@ for mip in `ls ${MIPS_OUTPUT}/*.{tif,png,jpg}` ; do
 done
 
 # copy additional results to the s3 output
-for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -regex ".*\.(txt|jpg|png|mp4|yaml)"` ; do
+for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -regex ".*\.(txt|jpg|png|mp4|yaml|yml|property)"` ; do
     aresult_name=$(basename $aresult)
     if [[ ${aresult_name} == *.mp4 ]] ; then
         alignmentMovie="alignment_results/${aresult_name}"
+        alignmentScore=$(cat "${ALIGNMENT_OUTPUT}/alignment_results/JRC2018_UNISEX_20x_HR_Score.property")
+        if [[ -z "${alignmentScore}" ]] ; then
+            echo "Alignment score not found - either ${ALIGNMENT_OUTPUT}/alignment_results/JRC2018_UNISEX_20x_HR_Score.property was missing or it was empty"
+            alignmentScore="0"
+        fi
     fi
     aws s3 cp ${aresult} s3://${outputs_s3bucket_name}/${output_dir}/alignment_results/${aresult_name}
 done
 
 echo "Set alignment to completed for ${searchId}: ${mips[@]}"
-updateSearch "${searchId}" 2 1 ${alignmentMovie} ${#mips[@]} "${mips[@]}"
+updateSearch "${searchId}" 2 1 ${alignmentMovie} ${alignmentScore} ${#mips[@]} "${mips[@]}"
 
 if [[ "${DEBUG_MODE}" != "debug" ]] ; then
     echo "Remove working input copy: ${working_input_filepath}"
