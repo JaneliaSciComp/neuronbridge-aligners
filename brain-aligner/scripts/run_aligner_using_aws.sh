@@ -295,10 +295,11 @@ done
 
 # copy additional results to the s3 output
 for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -regex ".*\.(txt|jpg|png|mp4|yaml|yml|property)"` ; do
-    aresult_name=$(basename $aresult)
+    aresult_name=$(basename ${aresult})
     if [[ ${aresult_name} == *.mp4 ]] ; then
         alignmentMovie="alignment_results/${aresult_name}"
-        alignmentScore=$(cat "${ALIGNMENT_OUTPUT}/alignment_results/JRC2018_UNISEX_20x_HR_Score.property")
+    elif [[ ${aresult_name} == *.property ]] ; then
+        alignmentScore=$(cat ${aresult})
         if [[ -z "${alignmentScore}" ]] ; then
             echo "Alignment score not found - either ${ALIGNMENT_OUTPUT}/alignment_results/JRC2018_UNISEX_20x_HR_Score.property was missing or it was empty"
             alignmentScore="0"
