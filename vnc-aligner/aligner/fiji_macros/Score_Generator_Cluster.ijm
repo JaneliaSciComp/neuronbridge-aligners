@@ -46,8 +46,8 @@ TempExt=File.exists(temppath);//"JFRC2010_symetric_R_flip.nrrd"
 if(TempExt!=1){
 	print("Template: "+temppath+" is not Existing");
 	
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	run("Quit");
 	
@@ -113,8 +113,8 @@ if(Allnrrd==true)
 nc82Nrrd = 1;
 
 
-h5jindex= lastIndexOf(h5jindex, ".h5j");
-v3dpbdindex = lastIndexOf(h5jindex, ".v3dpbd");
+h5jindex= lastIndexOf(path, ".h5j");
+v3dpbdindex = lastIndexOf(path, ".v3dpbd");
 
 
 open(path);
@@ -126,18 +126,18 @@ origi=getTitle();
 dotindex=lastIndexOf(origi,".");
 truname = substring(origi, 0, dotindex);
 
-logsum=getInfo("log");
+//logsum=getInfo("log");
 //filepath=savedir+truname+"_log.txt";
-File.saveString(logsum, filepath);
+//File.saveString(logsum, filepath);
 
 getDimensions(width, height, channels, slices, frames);
 getVoxelSize(VxWidth, VxHeight, VxDepth, VxUnit);
 bitd=bitDepth();
 
 
-print("sample open  "+path);
-logsum=getInfo("log");
-File.saveString(logsum, filepath);
+//print("sample open  "+path);
+//logsum=getInfo("log");
+//File.saveString(logsum, filepath);
 
 if(FlipZ==true){
 	
@@ -182,8 +182,8 @@ if(h5jindex!=-1 || v3dpbdindex!=-1){
 ////// For Nc82 //////////////////////////////////////
 if(endsWith(path,".tif") || endsWith(path,".h5j") || endsWith(path,".v3dpbd") || endsWith(path,".nrrd")){
 	print("The file is nc82!");
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	selectWindow(origi);//nc82 sample
 	
@@ -199,23 +199,23 @@ if(endsWith(path,".tif") || endsWith(path,".h5j") || endsWith(path,".v3dpbd") ||
 	stack=getImageID();
 	tempAveBriArray = newArray(tempAve,Tempmin,Tempmax);
 	
-	print("Before score 3D");
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	print("Before score 3D");
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	Score3D(NumCPU,stack,temppath,tempMaskpath,tempFilename,tempMaskFilename,UseMask,tempAveBriArray,ScoreMethod);// check alignment score
 	
-	print("Score3D function done");
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	print("Score3D function done");
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	//tempAve=tempAveBriArray[0];
 	Tempmin=tempAveBriArray[1];
 	Tempmax=tempAveBriArray[2];
 	
-	print("Array filled; Tempmin "+Tempmin+"   Tempmax; "+Tempmax);
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	print("Array filled; Tempmin "+Tempmin+"   Tempmax; "+Tempmax);
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	OBJscore = call("Alignment_Scores.getResult");
 	OBJscore=parseFloat(OBJscore);
@@ -239,8 +239,8 @@ if(endsWith(path,".tif") || endsWith(path,".h5j") || endsWith(path,".v3dpbd") ||
 	
 	print("OBJscore; "+OBJscore);
 	
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	selectWindow(origi);
 	run("Z Project...", "projection=[Max Intensity]");
@@ -253,8 +253,8 @@ if(endsWith(path,".tif") || endsWith(path,".h5j") || endsWith(path,".v3dpbd") ||
 	
 	print("detected minSample; "+minSample+"  adjusted min; "+min+"   detected maxSample; "+maxSample+"   adjusted max; "+max);
 	
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	close();
 	
@@ -265,9 +265,9 @@ if(endsWith(path,".tif") || endsWith(path,".h5j") || endsWith(path,".v3dpbd") ||
 	if(max!=maxSample)
 	run("Apply LUT", "stack");
 	
-	print("line 286");
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	print("line 286");
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	selectWindow(tempFilename);
 	rename("Temp.tif");
@@ -278,9 +278,9 @@ if(endsWith(path,".tif") || endsWith(path,".h5j") || endsWith(path,".v3dpbd") ||
 	
 	run("Merge Channels...", "c1=Temp.tif c2="+origi+" c3=Temp.tif");
 	
-	print("line 299");
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	print("line 299");
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	framer=nSlices/10;
 	framer=round(framer);
@@ -304,7 +304,7 @@ if(endsWith(path,".tif") || endsWith(path,".h5j") || endsWith(path,".v3dpbd") ||
 	logsum=getInfo("log");
 	//File.saveString(logsum, filepath);
 	
-	//File.saveString(OBJscore,savedir+truename+"_Score.property");
+	File.saveString(OBJscore,savedir+truename+"_Score.property");
 	
 	selectWindow("RGB");
 	close();
@@ -342,8 +342,8 @@ function Score3D (NumCPU,stack,temppath,tempMaskpath,tempFilename,tempMaskFilena
 	
 	print("tempFilename; "+tempFilename+"   stackname; "+stackname+"   ScoreMethod; "+ScoreMethod+"  UseMask; "+UseMask);
 	
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	
 	print("");
 	
@@ -355,8 +355,8 @@ function Score3D (NumCPU,stack,temppath,tempMaskpath,tempFilename,tempMaskFilena
 	getMinAndMax(Tempmin, Tempmax);
 	
 	print("detected tempMin; "+minSample+"  temp adjusted min"+min+"   detected tempMax; "+maxSample+"   adjusted temp max; "+max);
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	close();
 	
 	selectWindow(tempFilename);
@@ -371,21 +371,21 @@ function Score3D (NumCPU,stack,temppath,tempMaskpath,tempFilename,tempMaskFilena
 	if(UseMask==false){
 		
 		print("before Alignment Scores run");
-		logsum=getInfo("log");
-		File.saveString(logsum, filepath);
+	//	logsum=getInfo("log");
+	//	File.saveString(logsum, filepath);
 		
 		run("Alignment Scores", "template="+tempFilename+" sample="+stackname+" show weight=[Equal weight (temp and sample)] score="+ScoreMethod+" parallel="+NumCPU+"");
 	}
 	print("Alignment Scores run");
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 	//	run("Alignment Scores", "template=JFRC2013_20x_Yoshi.nrrd sample=C4-JRC_SS31259_20170616_24_C1_m_0.1955_ch.h5j show weight=[Equal weight (temp and sample)] score=[Zero-Normalized cross-correlation] parallel=8");
 	
 	if(UseMask==true){
 		
 		print("Use mask mode");
-		logsum=getInfo("log");
-		File.saveString(logsum, filepath);
+	//	logsum=getInfo("log");
+//		File.saveString(logsum, filepath);
 		
 		tempMaskopen=isOpen(tempMaskFilename);
 		if(tempMaskopen!=1){
@@ -467,8 +467,8 @@ function Score3D (NumCPU,stack,temppath,tempMaskpath,tempFilename,tempMaskFilena
 	}
 	
 	print("end of function");
-	logsum=getInfo("log");
-	File.saveString(logsum, filepath);
+//	logsum=getInfo("log");
+//	File.saveString(logsum, filepath);
 }
 
 run("Close All");
