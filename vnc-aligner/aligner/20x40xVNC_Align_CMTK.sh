@@ -110,14 +110,14 @@ function scoreGen() {
 	else
 	    echo "+---------------------------------------------------------------------------------------+"
 	    echo "| Running Score generation"
-	    echo "| $FIJI --headless -macro $POSTSCORE $OUTPUT/,$_outname,$NSLOTS,$_scoretemp"
+	    echo "| $FIJI --ij2 --headless -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}"
         echo "+---------------------------------------------------------------------------------------+"
     
         START=`date '+%F %T'`
         # Expect to take far less than 1 hour
 	    # Alignment Score generation:ZNCC, does not need Xvfb
 	
-	    $FIJI --headless -macro ${POSTSCORE} $OUTPUT/,$_outname,$NSLOTS,$_scoretemp
+	    $FIJI --ij2 --headless -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}
 	    STOP=`date '+%F %T'`
 
 	    echo "ZNCC JRC2018 score generation start: $START"
@@ -182,6 +182,25 @@ function reformatAll() {
             reformat "$GLOBAL_NRRD" "$_TEMP" "$_DEFFIELD" "$OUTPUT_NRRD" "$i" "ignore" "$opts"
         fi
 	done
+}
+
+function generateAllMIPs() {
+    local _sigDir=$1
+    local _fullSigName=$2
+    local _mipsOutput=$3
+    # generate MIPs for all signal channels ...
+    echo "Generate MIPs for all ${_fullSigName} signal channels to ${_mipsOutput}"
+
+    for ((ii=1; ii<=4; ii++)); do
+        if [[ -e "${_fullSigName}_0${ii}.nrrd" ]]; then
+            mipCmdArgs="${_sigDir}/,${_fullSigName}_0${ii}.nrrd,${_mipsOutput}/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
+            mipsCmd="$FIJI --ij2 --headless -macro ${MIPGENERATION} ${mipCmdArgs}"
+            echo "Generate MIPS for channel ${ii}: ${mipsCmd}"
+            ${mipsCmd}
+            echo "Finished generating MIPS for channel ${ii}"
+        fi
+    done
+    echo "Finished MIPs generation for all signal channels"
 }
 
 # write output properties for JACS
@@ -433,23 +452,38 @@ if [[ ! -e "${sig}_01.nrrd" ]]; then
     reformatAll "$gsig" "$TARGET_TEMPLATE" "$DEFFIELD" "$sig" "RAWOUT"
 fi
 
-echo "score log; ${OUTPUT}/Score_log_${TARGET_TEMPLATE%.*}.txt"
-
-if [[ ! -e "${OUTPUT}/Score_log_${TEMPNAME%.*}.txt" ]]; then
-    scoreGen "$sig_01.nrrd" ${TARGET_TEMPLATE} "score2018"
-fi
+echo "Score log: ${OUTPUT}/${TARGET_TEMPLATE%.*}_Score.property"
+scoreGen "${sig}_01.nrrd" ${TARGET_TEMPLATE} "score2018"
 
 # Generate MIPs
 MIPS_OUTPUT=${MIPS_OUTPUT:-"${OUTPUT}/MIP"}
+generateAllMIPs ${OUTPUT} ${sig} ${MIPS_OUTPUT}
 
-for ((ii=1; ii<=4; ii++)); do
-    if [[ -e "${sig}_0${ii}.nrrd" ]]; then
-        mipCmdArgs="${OUTPUT}/,${sig}_0${ii}.nrrd,${MIPS_OUTPUT}/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
-        mipsCmd="$FIJI --headless -macro ${MIPGENERATION} ${mipCmdArgs}"
-        echo "Generate MIPS for channel ${ii}: ${mipsCmd}"
-        ${mipsCmd}
-        echo "Finished generating MIPS for channel ${ii}: ${mipsCmd}"
-    fi
+for fin in ${OUTPUT}/*.avi; do
+    fout=${fin%.avi}.mp4
+    echo "ffmpeg -y -r 7 -i ${fin} -vcodec libx264 -b:v 2000000 -preset slow -tune film -pix_fmt yuv420p ${fout}"
+    ffmpeg -y -r 7 -i \
+           "$fin" -vcodec libx264 \
+           -b:v 2000000 -preset slow \
+           -tune film -pix_fmt yuv420p "$fout" && \
+    rm $fin
 done
+
+cp -R $OUTPUT/*.xform $DEBUG_DIR
+find $OUTPUT \
+  -maxdepth 1 \
+  -regextype posix-extended \
+  -regex ".*\.(png|jpg|txt|log|nrrd)" \
+  -exec cp {} $DEBUG_DIR \;
+
+echo copy {property,nrrd,jpg,png,mp4,txt} to $FINALOUTPUT
+find $OUTPUT \
+  -maxdepth 1 \
+  -regextype posix-extended \
+  -regex ".*\.(property|nrrd|jpg|png|mp4|txt|yaml)" \
+  -exec cp {} $FINALOUTPUT \;
+
+echo copy $MIPS_OUTPUT $FINALOUTPUT
+cp -a $MIPS_OUTPUT $FINALOUTPUT
 
 echo "$0 done"

@@ -421,7 +421,7 @@ cp -R $OUTPUT/*.xform $DEBUG_DIR
 find $OUTPUT \
   -maxdepth 1 \
   -regextype posix-extended \
-  -regex ".*\.(png|jpg|txt|nrrd)" \
+  -regex ".*\.(png|jpg|txt|log|nrrd)" \
   -exec cp {} $DEBUG_DIR \;
 
 echo copy {property,nrrd,jpg,png,mp4,txt} to $FINALOUTPUT

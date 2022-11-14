@@ -83,6 +83,16 @@ echo "Set java user directory to ${JAVA_USER_DIR}"
 
 export JAVA_TOOL_OPTIONS="-Duser.home=${JAVA_USER_DIR}"
 
+function cleanTemp {
+    if [[ "${DEBUG_MODE}" =~ "debug" ]]; then
+        echo "~ Debugging mode - Leaving temp directory"
+    else
+        echo "Cleaning ${WORKING_DIR}"
+        rm -rf ${WORKING_DIR}
+        echo "Cleaned up ${WORKING_DIR}"
+    fi
+}
+
 ALIGNMENT_OUTPUT=${ALIGNMENT_OUTPUT:-"${output_dir}/aligned"}
 mkdir -p ${ALIGNMENT_OUTPUT}
 
@@ -92,12 +102,28 @@ export FINALOUTPUT=${ALIGNMENT_OUTPUT}
 echo "~ Run alignment: ${input_filepath} ${nslots} ${reference_channel} ${FINALOUTPUT} ${alignmentErrFile}"
 /opt/aligner/20x40xVNC_Align_CMTK.sh ${input_filepath} ${nslots} ${reference_channel} ${FINALOUTPUT} ${alignmentErrFile}
 alignmentExitCode=$?
-
 if [ $alignmentExitCode -ne 0 ]; then
     echo "Alignment terminated with code ${alignmentExitCode}. Read error file: ${alignmentErrFile}"
     if [[ -e "${alignmentErrFile}" ]] ; then
         alignmentErr=$(cat "${alignmentErrFile}" || "")
         echo "Alignment terminated abnormally ${alignmentErr}"
     fi
+    exit 1
+fi
+
+cd ${output_dir}
+echo ""
+echo "~ Listing working files:"
+echo ""
+tree -s $WORKING_DIR
+
+alignment_results=$(shopt -s nullglob dotglob; echo ${ALIGNMENT_OUTPUT}/*.nrrd)
+echo "Alignment results: ${alignment_results[@]}"
+if (( ${#alignment_results} )); then
+    echo "~ Finished alignment: ${input_filepath}"
+    cleanTemp
+    exit 0
+else
+    echo "~ No alignment results were found after alignment of ${input_filepath} ${WORKING_DIR}"
     exit 1
 fi
