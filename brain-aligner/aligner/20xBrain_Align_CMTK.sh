@@ -211,6 +211,16 @@ if [[ ! -e $FIJI ]]; then
     exit 1
 fi
 
+if [[ ! -f ${InputFilePath} ]]; then
+    # input file not found
+    echo "Input file '${InputFilePath}' not found" > ${returnedErrorFilename}
+    exit 1
+elif [[ -f ${InputFilePath} && ! -s ${InputFilePath} ]]; then
+    # the file exists but is empty
+    echo "Input file ('${InputFilePath}') found but is empty" > ${returnedErrorFilename}
+    exit 1
+fi
+
 # neuron mask is ignored
 Unaligned_Neuron_Separator_Result_V3DPBD=
 

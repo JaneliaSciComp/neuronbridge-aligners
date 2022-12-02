@@ -64,12 +64,8 @@ while [[ $# > 0 ]]; do
     esac
 done
 
-if [ ! -e "${input_filepath}" ]; then
-    echo "Input file path ${input_filepath} not found"
-    exit 1
-fi
-
 umask 0002
+
 export NSLOTS=${NSLOTS:-$nslots}
 export WORKING_DIR="${output_dir}/temp"
 
@@ -106,7 +102,7 @@ if [ $alignmentExitCode -ne 0 ]; then
     echo "Alignment terminated with code ${alignmentExitCode}. Read error file: ${alignmentErrFile}"
     if [[ -e "${alignmentErrFile}" ]] ; then
         alignmentErr=$(cat "${alignmentErrFile}" || "")
-        echo "Alignment terminated abnormally ${alignmentErr}"
+        printf "Alignment error:\n${alignmentErr}\n"
     fi
     exit 1
 fi

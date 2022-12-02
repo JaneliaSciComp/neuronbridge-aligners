@@ -261,7 +261,6 @@ function writeErrorProperties() {
     echo "alignment.objective=$_objective" >> $META
 }
 
-
 function banner() {
     echo "------------------------------------------------------------------------------------------------------------"
     echo " $1"
@@ -282,6 +281,16 @@ fi
 
 if [[ ! -e $FIJI ]]; then
     echo "Fiji cannot be found at $FIJI"
+    exit 1
+fi
+
+if [[ ! -f ${InputFilePath} ]]; then
+    # input file not found
+    echo "Input file '${InputFilePath}' not found" > ${returnedErrorFilename}
+    exit 1
+elif [[ -f ${InputFilePath} && ! -s ${InputFilePath} ]]; then
+    # the file exists but is empty
+    echo "Input file ('${InputFilePath}') found but is empty" > ${returnedErrorFilename}
     exit 1
 fi
 
