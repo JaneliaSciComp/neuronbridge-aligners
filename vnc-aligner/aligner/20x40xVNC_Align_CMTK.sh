@@ -19,6 +19,7 @@ WORKING_DIR=${WORKING_DIR:-"${InputFileParentPath}/${InputName}_TMP"}
 DEBUG_DIR="${WORKING_DIR}/Debug"
 OUTPUT="${WORKING_DIR}/Output"
 FINALOUTPUT=${FINALOUTPUT:-"${WORKING_DIR}/FinalOutputs"}
+HEADLESS_FIJI_FLAG=${HEADLESS_FIJI_FLAG-"--headless"}
 
 # Tools
 CMTK_HOME=${CMTK_HOME:-"/opt/CMTK"}
@@ -110,14 +111,14 @@ function scoreGen() {
 	else
 	    echo "+---------------------------------------------------------------------------------------+"
 	    echo "| Running Score generation"
-	    echo "| $FIJI --ij2 --headless -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}"
+	    echo "| $FIJI --ij2 ${HEADLESS_FIJI_FLAG} -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}"
         echo "+---------------------------------------------------------------------------------------+"
     
         START=`date '+%F %T'`
         # Expect to take far less than 1 hour
 	    # Alignment Score generation:ZNCC, does not need Xvfb
 	
-	    $FIJI --ij2 --headless -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}
+	    $FIJI --ij2 ${HEADLESS_FIJI_FLAG} -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}
 	    STOP=`date '+%F %T'`
 
 	    echo "ZNCC JRC2018 score generation start: $START"
@@ -145,7 +146,7 @@ function reformat() {
         $CMTK/reformatx --threads $NSLOTS -o "$_sig" $_opts --floating $_gsig $_TEMP $_DEFFIELD
         STOP=`date '+%F %T'`
 
-        $FIJI --headless --headless -macro $NRRDCOMP "$_sig"
+        $FIJI ${HEADLESS_FIJI_FLAG} -macro $NRRDCOMP "$_sig"
 
         if [[ ! -e $_sig ]]; then
             echo -e "Error: CMTK reformatting signal failed"
@@ -194,7 +195,7 @@ function generateAllMIPs() {
     for ((ii=1; ii<=4; ii++)); do
         if [[ -e "${_fullSigName}_0${ii}.nrrd" ]]; then
             mipCmdArgs="${_sigDir}/,${_fullSigName}_0${ii}.nrrd,${_mipsOutput}/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
-            mipsCmd="$FIJI --ij2 --headless -macro ${MIPGENERATION} ${mipCmdArgs}"
+            mipsCmd="$FIJI --ij2 ${HEADLESS_FIJI_FLAG} -macro ${MIPGENERATION} ${mipCmdArgs}"
             echo "Generate MIPS for channel ${ii}: ${mipsCmd}"
             ${mipsCmd}
             echo "Finished generating MIPS for channel ${ii}"
@@ -345,11 +346,11 @@ else
     fi
     echo "+---------------------------------------------------------------------------------------+"
     echo "| Running Otsuna preprocessing step                                                     |"
-    echo "| $FIJI --headless -macro ${PREPROCIMG} \"${OUTPUT}/,${filename},${TemplatesDir},${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}\" >$DEBUG_DIR/preproc.log 2>&1 |"
+    echo "| $FIJI ${HEADLESS_FIJI_FLAG} -macro ${PREPROCIMG} \"${OUTPUT}/,${filename},${TemplatesDir},${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}\" >$DEBUG_DIR/preproc.log 2>&1 |"
     echo "+---------------------------------------------------------------------------------------+"
     START=`date '+%F %T'`
     # Expect to take far less than 1 hour
-    $FIJI --headless -macro ${PREPROCIMG} "${OUTPUT}/,${filename},${TemplatesDir}/,${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}" >$DEBUG_DIR/preproc.log 2>&1
+    $FIJI ${HEADLESS_FIJI_FLAG} -macro ${PREPROCIMG} "${OUTPUT}/,${filename},${TemplatesDir}/,${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}" >$DEBUG_DIR/preproc.log 2>&1
     preprocessExitCode=$?
 
     STOP=`date '+%F %T'`
