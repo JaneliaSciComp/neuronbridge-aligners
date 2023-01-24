@@ -32,9 +32,10 @@ RUN yum install -y \
         mesa-libGLU libXtst-devel libXrender
 
 RUN echo "Installing Fiji"
+ARG FIJI_VERSION=20221005-1117
 # Install Fiji
 ENV FIJI_FILE=fiji-linux64.zip
-ENV FIJI_DOWNLOAD_URL=https://downloads.imagej.net/fiji/latest/${FIJI_FILE}
+ENV FIJI_DOWNLOAD_URL=https://downloads.imagej.net/fiji/archive/${FIJI_VERSION}/${FIJI_FILE}
 ENV EXTTRACT_CMD="unzip"
 RUN wget -q --no-check-certificate ${FIJI_DOWNLOAD_URL}
 RUN ${EXTTRACT_CMD} $FIJI_FILE && \
