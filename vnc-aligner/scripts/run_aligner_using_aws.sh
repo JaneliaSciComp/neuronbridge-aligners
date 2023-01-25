@@ -310,8 +310,15 @@ for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -
     aws s3 cp ${aresult} s3://${outputs_s3bucket_name}/${output_dir}/alignment_results/${aresult_name}
 done
 
+# check if alignment may have had problems due to bad shape
+if [[ -e "${ALIGNMENT_OUTPUT}/bad_shape.txt" ]] ; then
+    alignShapeErrors=$(sed 1d "${ALIGNMENT_OUTPUT}/bad_shape.txt" || "")
+else
+    alignShapeErrors=
+fi
+
 echo "Set alignment to completed for ${searchId}: ${mips[@]}"
-updateSearch "${searchId}" 2 1 ${alignmentMovie} ${alignmentScore} ${#mips[@]} "${mips[@]}"
+updateSearch "${searchId}" 2 1 ${alignmentMovie} ${alignmentScore} ${#mips[@]} "${mips[@]}" "${alignShapeErrors}"
 
 if [[ "${DEBUG_MODE}" != "debug" ]] ; then
     echo "Remove working input copy: ${working_input_filepath}"
