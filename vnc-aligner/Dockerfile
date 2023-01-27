@@ -76,7 +76,9 @@ RUN chmod 755 /opt/aligner-scripts/*.sh
 RUN echo "Installing Fiji plugins for the aligner"
 ENV PLUGINS_SOURCE=/opt/aligner/fiji_plugins
 ENV PLUGINS_TARGET=/opt/Fiji/plugins
-RUN cp -R $PLUGINS_SOURCE/* $PLUGINS_TARGET && /bin/rm -rf $PLUGINS_SOURCE
+RUN cp -R $PLUGINS_SOURCE/* $PLUGINS_TARGET \
+ && /bin/rm -rf $PLUGINS_SOURCE \
+ && /opt/Fiji/ImageJ-linux64 --run /opt/aligner/fiji_plugins/H5J_Installer.jar
 
 RUN echo "Installing Fiji LUTs for color depth"
 ENV LUTS_SOURCE=/opt/aligner/fiji_luts

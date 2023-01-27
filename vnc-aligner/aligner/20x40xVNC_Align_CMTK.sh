@@ -19,7 +19,6 @@ WORKING_DIR=${WORKING_DIR:-"${InputFileParentPath}/${InputName}_TMP"}
 DEBUG_DIR="${WORKING_DIR}/Debug"
 OUTPUT="${WORKING_DIR}/Output"
 FINALOUTPUT=${FINALOUTPUT:-"${WORKING_DIR}/FinalOutputs"}
-HEADLESS_FIJI_FLAG=${HEADLESS_FIJI_FLAG-"--headless"}
 
 # Tools
 CMTK_HOME=${CMTK_HOME:-"/opt/CMTK"}
@@ -45,6 +44,11 @@ TemplatesDir=`realpath ${ALIGN_TEMPLATE_DIR}`
 MIPTemplatesDir=`realpath ${MIP_TEMPLATE_DIR}`
 
 JRC2018_VNC_Unisex1micron="$TemplatesDir/JRC2018_VNC_UNISEX_1micron.nrrd"
+
+memResource=${ALIGNMENT_MEMORY:-"2G"}
+HEADLESS_FIJI_FLAG=${HEADLESS_FIJI_FLAG-"--headless"}
+
+FIJI_OPTS="${HEADLESS_FIJI_FLAG} --ij2 --mem ${memResource} --info --dont-patch-ij1 --no-splash"
 
 TEMPLATE_SELECTOR=1
 if [[ ${TEMPLATE_SELECTOR} == 1 ]]; then
@@ -111,14 +115,14 @@ function scoreGen() {
 	else
 	    echo "+---------------------------------------------------------------------------------------+"
 	    echo "| Running Score generation"
-	    echo "| $FIJI --ij2 ${HEADLESS_FIJI_FLAG} -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}"
+	    echo "| $FIJI ${FIJI_OPTS} -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}"
         echo "+---------------------------------------------------------------------------------------+"
     
         START=`date '+%F %T'`
         # Expect to take far less than 1 hour
 	    # Alignment Score generation:ZNCC, does not need Xvfb
 	
-	    $FIJI --ij2 ${HEADLESS_FIJI_FLAG} -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}
+	    $FIJI ${FIJI_OPTS} -macro ${POSTSCORE} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}
 	    STOP=`date '+%F %T'`
 
 	    echo "ZNCC JRC2018 score generation start: $START"
@@ -146,7 +150,7 @@ function reformat() {
         $CMTK/reformatx --threads $NSLOTS -o "$_sig" $_opts --floating $_gsig $_TEMP $_DEFFIELD
         STOP=`date '+%F %T'`
 
-        $FIJI ${HEADLESS_FIJI_FLAG} -macro $NRRDCOMP "$_sig"
+        $FIJI ${FIJI_OPTS} -macro $NRRDCOMP "$_sig"
 
         if [[ ! -e $_sig ]]; then
             echo -e "Error: CMTK reformatting signal failed"
@@ -195,7 +199,7 @@ function generateAllMIPs() {
     for ((ii=1; ii<=4; ii++)); do
         if [[ -e "${_fullSigName}_0${ii}.nrrd" ]]; then
             mipCmdArgs="${_sigDir}/,${_fullSigName}_0${ii}.nrrd,${_mipsOutput}/,${MIPTemplatesDir}/,1.1,false,${NSLOTS}"
-            mipsCmd="$FIJI --ij2 ${HEADLESS_FIJI_FLAG} -macro ${MIPGENERATION} ${mipCmdArgs}"
+            mipsCmd="$FIJI ${FIJI_OPTS} -macro ${MIPGENERATION} ${mipCmdArgs}"
             echo "Generate MIPS for channel ${ii}: ${mipsCmd}"
             ${mipsCmd}
             echo "Finished generating MIPS for channel ${ii}"
@@ -346,20 +350,27 @@ else
     fi
     echo "+---------------------------------------------------------------------------------------+"
     echo "| Running Otsuna preprocessing step                                                     |"
-    echo "| $FIJI ${HEADLESS_FIJI_FLAG} -macro ${PREPROCIMG} \"${OUTPUT}/,${filename},${TemplatesDir},${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}\" >$DEBUG_DIR/preproc.log 2>&1 |"
+    echo "| $FIJI ${FIJI_OPTS} -macro ${PREPROCIMG} \"${OUTPUT}/,${filename},${TemplatesDir},${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}\" >$DEBUG_DIR/preproc.log 2>&1 |"
     echo "+---------------------------------------------------------------------------------------+"
     START=`date '+%F %T'`
+    echo "Otsuna preprocessing start: $START"
     # Expect to take far less than 1 hour
-    $FIJI ${HEADLESS_FIJI_FLAG} -macro ${PREPROCIMG} "${OUTPUT}/,${filename},${TemplatesDir}/,${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}" >$DEBUG_DIR/preproc.log 2>&1
+    $FIJI ${FIJI_OPTS} -macro ${PREPROCIMG} "${OUTPUT}/,${filename},${TemplatesDir}/,${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}" >$DEBUG_DIR/preproc.log 2>&1
     preprocessExitCode=$?
 
     STOP=`date '+%F %T'`
 
-    echo "Otsuna preprocessing start: $START"
     echo "Otsuna preprocessing stop: $STOP with exit code ${preprocessExitCode}"
     # check for prealigner errors
 
     cp $LOGFILE $DEBUG_DIR
+    if [[ ${preprocessExitCode} -ne 0 ]] ; then
+        # dump preprocessing log
+        echo "Dump Preprocessing Log because it exited with code ${preprocessExitCode}"
+        cat "$DEBUG_DIR/preproc.log"
+    fi
+
+    echo "Check preprocessing log for errors"
     CoreDumpError=`grep SIGSEGV $DEBUG_DIR/preproc.log`
     PreAlignerError=`grep "PreAlignerError: " $LOGFILE | head -n1 | sed "s/PreAlignerError: //"`
     MemoryError=`grep -i "Cannot allocate memory" $LOGFILE | head -n1`
