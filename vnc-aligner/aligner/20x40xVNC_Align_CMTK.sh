@@ -340,62 +340,68 @@ registered_warp_xform=$OUTPUT"/warp.xform"
 reformat_JRC2018_to_Uni="$TemplatesDir/Deformation_Fields/JRC2018_VNC_Unisex_JRC2018_$genderT"
 
 LOGFILE="${OUTPUT}/VNC_pre_aligner_log.txt"
-if [[ -e $LOGFILE ]]; then
-    echo "Already exists: $LOGFILE"
+
+SHAPE_ANALYSIS="true"
+if [[ $SKIP_PREALIGNER == "true" ]]; then
+    echo "SKIP_PREALIGNER is $SKIP_PREALIGNER, skipping shape analysis"
+    SHAPE_ANALYSIS="false"
+fi
+echo "+---------------------------------------------------------------------------------------+"
+echo "| Running Otsuna preprocessing step                                                     |"
+echo "| $FIJI ${FIJI_OPTS} -macro ${PREPROCIMG} \"${OUTPUT}/,${filename},${TemplatesDir}/,${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}\" >$DEBUG_DIR/preproc.log 2>&1 |"
+echo "+---------------------------------------------------------------------------------------+"
+START=`date '+%F %T'`
+echo "Otsuna preprocessing start: $START"
+# Expect to take far less than 1 hour
+$FIJI ${FIJI_OPTS} -macro ${PREPROCIMG} "${OUTPUT}/,${filename},${TemplatesDir}/,${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}" >$DEBUG_DIR/preproc.log 2>&1
+preprocessExitCode=$?
+
+STOP=`date '+%F %T'`
+
+echo "Otsuna preprocessing stop: $STOP with exit code ${preprocessExitCode}"
+# check for prealigner errors
+
+cp $LOGFILE $DEBUG_DIR
+if [[ ${preprocessExitCode} -ne 0 ]] ; then
+    # dump preprocessing log
+    echo "Dump Preprocessing Log because it exited with code ${preprocessExitCode}"
+    cat "$DEBUG_DIR/preproc.log"
+fi
+
+echo "Check preprocessing log for errors"
+if [[ -e "$OUTPUT/bad_shape.txt" ]] ; then
+    echo "Shape problems found"
+    cat "$OUTPUT/bad_shape.txt"
 else
-    SHAPE_ANALYSIS="true"
-    if [[ $SKIP_PREALIGNER == "true" ]]; then
-        echo "SKIP_PREALIGNER is $SKIP_PREALIGNER, skipping shape analysis"
-        SHAPE_ANALYSIS="false"
-    fi
-    echo "+---------------------------------------------------------------------------------------+"
-    echo "| Running Otsuna preprocessing step                                                     |"
-    echo "| $FIJI ${FIJI_OPTS} -macro ${PREPROCIMG} \"${OUTPUT}/,${filename},${TemplatesDir},${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}\" >$DEBUG_DIR/preproc.log 2>&1 |"
-    echo "+---------------------------------------------------------------------------------------+"
-    START=`date '+%F %T'`
-    echo "Otsuna preprocessing start: $START"
-    # Expect to take far less than 1 hour
-    $FIJI ${FIJI_OPTS} -macro ${PREPROCIMG} "${OUTPUT}/,${filename},${TemplatesDir}/,${InputFilePath},ssr,${GENDER_TEMPLATE_SELECTOR},NULL,${NSLOTS},${SHAPE_ANALYSIS},${nc82decision}" >$DEBUG_DIR/preproc.log 2>&1
-    preprocessExitCode=$?
+    echo "Did not identify any shape problem"
+fi
 
-    STOP=`date '+%F %T'`
+CoreDumpError=`grep SIGSEGV $DEBUG_DIR/preproc.log`
+PreAlignerError=`grep "PreAlignerError: " $LOGFILE | head -n1 | sed "s/PreAlignerError: //"`
+MemoryError=`grep -i "Cannot allocate memory" $LOGFILE | head -n1`
+OutOfMemoryError=`grep -i "out of memory" $LOGFILE | head -n1`
 
-    echo "Otsuna preprocessing stop: $STOP with exit code ${preprocessExitCode}"
-    # check for prealigner errors
+if [[ ! -z "${CoreDumpError}" ]] ; then
+    ALIGNMENT_ERROR="Preprocessing failed with a fatal error"
+elif [[ ! -z "${PreAlignerError}" ]]; then
+    ALIGNMENT_ERROR="Pre-aligner rejection: $PreAlignerError"
+elif [[ ! -z "${MemoryError}" || ! -z "${OutOfMemoryError}" ]] ; then
+    ALIGNMENT_ERROR="Out of memory error";
+fi
 
-    cp $LOGFILE $DEBUG_DIR
-    if [[ ${preprocessExitCode} -ne 0 ]] ; then
-        # dump preprocessing log
-        echo "Dump Preprocessing Log because it exited with code ${preprocessExitCode}"
-        cat "$DEBUG_DIR/preproc.log"
-    fi
-
-    echo "Check preprocessing log for errors"
-    CoreDumpError=`grep SIGSEGV $DEBUG_DIR/preproc.log`
-    PreAlignerError=`grep "PreAlignerError: " $LOGFILE | head -n1 | sed "s/PreAlignerError: //"`
-    MemoryError=`grep -i "Cannot allocate memory" $LOGFILE | head -n1`
-    OutOfMemoryError=`grep -i "out of memory" $LOGFILE | head -n1`
-    if [[ ! -z "${CoreDumpError}" ]] ; then
-        ALIGNMENT_ERROR="Preprocessing failed with a fatal error"
-    elif [[ ! -z "${PreAlignerError}" ]]; then
-        ALIGNMENT_ERROR="Pre-aligner rejection: $PreAlignerError"
-    elif [[ ! -z "${MemoryError}" || ! -z "${OutOfMemoryError}" ]] ; then
-        ALIGNMENT_ERROR="Out of memory error";
-    fi
-    if [[ ! -z "${ALIGNMENT_ERROR}" ]]; then
-        echo "~ Preprocessing output"
-        tail -1000 $DEBUG_DIR/preproc.log
-        echo "~ Preprocessing log"
-        cat ${LOGFILE}
-        echo "~ Preprocessing error: ${ALIGNMENT_ERROR}"
-        echo ${ALIGNMENT_ERROR} > ${returnedErrorFilename} 
-        exit 1
-    elif [[ ${DEBUG_MODE} =~ "debug" ]]; then
-        echo "~ Preprocessing output"
-        tail -1000 $DEBUG_DIR/preproc.log
-        echo "~ Preprocessing log"
-        cat ${LOGFILE}
-    fi
+if [[ ! -z "${ALIGNMENT_ERROR}" ]]; then
+    echo "~ Preprocessing output"
+    tail -1000 $DEBUG_DIR/preproc.log
+    echo "~ Preprocessing log"
+    cat ${LOGFILE}
+    echo "~ Preprocessing error: ${ALIGNMENT_ERROR}"
+    echo ${ALIGNMENT_ERROR} > ${returnedErrorFilename} 
+    exit 1
+elif [[ ${DEBUG_MODE} =~ "debug" ]]; then
+    echo "~ Preprocessing output"
+    tail -1000 $DEBUG_DIR/preproc.log
+    echo "~ Preprocessing log"
+    cat ${LOGFILE}
 fi
 
 echo "iniT; "$iniT
@@ -497,11 +503,11 @@ find $OUTPUT \
   -regex ".*\.(png|jpg|txt|log|nrrd)" \
   -exec cp {} $DEBUG_DIR \;
 
-echo copy {property,nrrd,jpg,png,mp4,txt} to $FINALOUTPUT
+echo copy {avi,property,nrrd,jpg,png,mp4,txt} to $FINALOUTPUT
 find $OUTPUT \
   -maxdepth 1 \
   -regextype posix-extended \
-  -regex ".*\.(property|nrrd|jpg|png|mp4|txt|yaml)" \
+  -regex ".*\.(avi|property|nrrd|jpg|png|mp4|txt|yaml)" \
   -exec cp {} $FINALOUTPUT \;
 
 echo copy $MIPS_OUTPUT $FINALOUTPUT

@@ -15,11 +15,15 @@ LOCAL_DATA=local/testData
 INPUT="/data/vncData/${DATA_FILE}"
 OUTPUT="/data/vncOutput/${DATA_FILE%.*}"
 
+PLATFORM_ARG="--platform=linux/x86_64"
+
 docker run \
        -v $PWD/${LOCAL_DATA}:/data \
        -v $PWD/local/scratch:/scratch \
        -it \
        $FB_MODE_PARAM \
+       ${PLATFORM_ARG} \
+       -e ALIGNMENT_MEMORY=16G \
        -e TMP=/scratch \
        -e TMPDIR=/scratch \
        janeliascicomp/neuronbridge-vncaligner:1.0 \

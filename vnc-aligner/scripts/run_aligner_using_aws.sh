@@ -213,7 +213,7 @@ else
 fi
 
 if [[ "${templates_s3bucket_name}" != "" ]] ; then
-    echo "Mount S3 templates buckets using s3fs"
+    echo "Mount S3 templates bucket ${templates_s3bucket_name} using s3fs"
 
     s3fs_opts="-o use_path_request_style,nosscache"
     if [[ "${use_iam_role}" != "" ]] ; then
@@ -227,7 +227,8 @@ if [[ "${templates_s3bucket_name}" != "" ]] ; then
     # mount templates directories both MIP and VNC templates
     mountMIPTemplatesCmd="/usr/bin/s3fs ${templates_s3bucket_name} ${S3_MIP_TEMPLATES_MOUNTPOINT} ${s3fs_opts}"
     mountVNCTemplatesCmd="/usr/bin/s3fs ${templates_s3bucket_name} ${S3_VNC_TEMPLATES_MOUNTPOINT} ${s3fs_opts}"
-    echo "Mount templates from S3: ${mountTemplatesCmd}"
+    echo "Mount MIP templates from S3: ${mountMIPTemplatesCmd}"
+    echo "Mount VNC templates from S3: ${mountVNCTemplatesCmd}"
     ${mountMIPTemplatesCmd}
     ${mountVNCTemplatesCmd}
     if [[ "${mip_templates_dir_param}" != "" ]] ; then
