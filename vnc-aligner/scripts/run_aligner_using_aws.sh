@@ -167,8 +167,11 @@ function updateSearch() {
             searchData="{
                 \"searchId\": \"${searchId}\",
                 \"step\": ${searchStep},
+                \"alignFinished\": \"${alignedTimestamp}\",
                 \"computedMIPs\": [ ${mipsList} ],
                 \"uploadThumbnail\": \"${thumbnail}\",
+                \"alignmentMovie\": \"${alignmentMovie}\",
+                \"alignmentScore\": \"${alignmentScore}\",
                 \"alignmentErrorMessage\": \"${errorMessage}\"
             }"
         fi
