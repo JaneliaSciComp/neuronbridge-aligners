@@ -60,7 +60,8 @@ SCOREGENERATION="${MACRO_DIR}/Score_Generator_Cluster.ijm"
 REGCROP="${MACRO_DIR}/TempCrop_after_affine.ijm"
 
 memResource=${ALIGNMENT_MEMORY:-"2G"}
-FIJI_OPTS="--ij2 --mem ${memResource} --info --dont-patch-ij1 --no-splash"
+HEADLESS_FIJI_FLAG=${HEADLESS_FIJI_FLAG-"--headless"}
+FIJI_OPTS="--ij2 --mem ${memResource}"
 
 BrainShape="Both_OL_missing (40x)"
 objective="20x"
@@ -132,13 +133,13 @@ function scoreGen() {
     else
         echo "+---------------------------------------------------------------------------------------+"
         echo "| Running Score generation"
-        echo "| $FIJI --ij2 --mem ${memResource} --headless -macro ${SCOREGENERATION} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}"
+        echo "| $FIJI --ij2 --mem ${memResource} ${HEADLESS_FIJI_FLAG} -macro ${SCOREGENERATION} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}"
         echo "+---------------------------------------------------------------------------------------+"
 
         START=`date '+%F %T'`
         # Expect to take far less than 1 hour
 	    # Alignment Score generation:ZNCC can run in headless mode (no X11 needed)	
-        $FIJI --ij2 --mem ${memResource} --headless -macro ${SCOREGENERATION} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}
+        $FIJI --ij2 --mem ${memResource} ${HEADLESS_FIJI_FLAG} -macro ${SCOREGENERATION} ${OUTPUT}/,${_outname},${NSLOTS},${_scoretemp}
         STOP=`date '+%F %T'`
 
         echo "ZNCC JRC2018 score generation start: $START"
@@ -155,7 +156,7 @@ function generateAllMIPs() {
     echo "Generate MIPs for all signal channels to ${_mipsOutput}"
     for ((i=1; i<=$NCHANNELS; i++)); do
         mipCmdArgs="${_sigDir}/,${_sigBaseName}_0${i}.nrrd,${_mipsOutput}/,${TemplatesDir}/,${area}"
-        mipsCmd="$FIJI --ij2 --mem ${memResource} --headless -macro ${MIPGENERATION} ${mipCmdArgs}"
+        mipsCmd="$FIJI --ij2 --mem ${memResource} ${HEADLESS_FIJI_FLAG} -macro ${MIPGENERATION} ${mipCmdArgs}"
         echo "Generate MIPS for channel ${i}: ${mipsCmd}"
         ${mipsCmd}
         echo "Generated MIPS for channel ${i}"
@@ -250,14 +251,13 @@ else
     preprocessingParams="${OUTPUT}/,${InputName}.,${InputFilePath},${TemplatesDir},${RESX},${RESZ},${NSLOTS},${objective},${templateBr},${BrainShape},${Unaligned_Neuron_Separator_Result_V3DPBD},${ForceUseVxSize},${referenceChannel},${comparisonAlg}"
     echo "+---------------------------------------------------------------------------------------+"
     echo "| Running OtsunaBrain preprocessing step"
-    echo "| ${FIJI} ${FIJI_OPTS} -macro ${PREPROCIMG} \"${preprocessingParams}\""
+    echo "| ${FIJI} ${HEADLESS_FIJI_FLAG} ${FIJI_OPTS} -macro ${PREPROCIMG} \"${preprocessingParams}\""
     echo "+---------------------------------------------------------------------------------------+"
     START=`date '+%F %T'`
     # Start the preprocessing in background and then wait until it finishes or times out.
-    # Note that this macro does not seem to work in --headless mode
     PREALIGN_TIMEOUT=$((${PREALIGN_TIMEOUT:-9000}))
     PREALIGN_CHECKINTERVAL=$((${PREALIGN_CHECKINTERVAL:-60}))
-    (${FIJI} "${FIJI_OPTS}" -macro ${PREPROCIMG} "${preprocessingParams}" > ${DEBUG_DIR}/preproc.log 2>&1) &
+    (${FIJI} ${HEADLESS_FIJI_FLAG} "${FIJI_OPTS}" -macro ${PREPROCIMG} "${preprocessingParams}" > ${DEBUG_DIR}/preproc.log 2>&1) &
     fpid=$!
 
     function prealignTimeoutHandler {
@@ -364,8 +364,8 @@ else
     echo "Run: $CMTK/reformatx -o $sig --floating $gsig $TEMP $DEFFIELD"
     $CMTK/reformatx -o "$sig" --floating $gsig $TEMP $DEFFIELD
 
-    echo "Run: $FIJI ${FIJI_OPTS} -macro $REGCROP \"$TEMP,$sig,$NSLOTS\""
-    $FIJI "${FIJI_OPTS}" -macro $REGCROP "$TEMP,$sig,$NSLOTS"
+    echo "Run: $FIJI ${HEADLESS_FIJI_FLAG} ${FIJI_OPTS} -macro $REGCROP \"$TEMP,$sig,$NSLOTS\""
+    $FIJI ${HEADLESS_FIJI_FLAG} "${FIJI_OPTS}" -macro $REGCROP "$TEMP,$sig,$NSLOTS"
 fi
 
 # CMTK warping
@@ -394,9 +394,9 @@ rm $JRC2018_Unisexgen1CROPPED
 echo " "
 echo "+----------------------------------------------------------------------+"
 echo "| 12-bit conversion"
-echo "| $FIJI --ij2 --mem ${memResource} --headless -macro $TWELVEBITCONV \"${OUTPUT}/,${InputName}_01.nrrd,${gloval_nc82_nrrd}\""
+echo "| $FIJI --ij2 --mem ${memResource} ${HEADLESS_FIJI_FLAG} -macro $TWELVEBITCONV \"${OUTPUT}/,${InputName}_01.nrrd,${gloval_nc82_nrrd}\""
 echo "+----------------------------------------------------------------------+"
-$FIJI --ij2 --mem ${memResource} --headless -macro $TWELVEBITCONV "${OUTPUT}/,${InputName}_01.nrrd,${gloval_nc82_nrrd}"
+$FIJI --ij2 --mem ${memResource} ${HEADLESS_FIJI_FLAG} -macro $TWELVEBITCONV "${OUTPUT}/,${InputName}_01.nrrd,${gloval_nc82_nrrd}"
 
 ########################################################################################################
 # JFRC2018 Unisex High-resolution (for color depth search) reformat

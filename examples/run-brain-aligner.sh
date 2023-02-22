@@ -60,7 +60,7 @@ docker run \
        -e PREALIGN_TIMEOUT=9000 \
        -e PREALIGN_CHECKINTERVAL=10 \
        -e ALIGNMENT_MEMORY=16G \
-       janeliascicomp/neuronbridge-brainaligner:1.0 \
+       janeliascicomp/neuronbridge-brainaligner:1.1 \
        /opt/aligner-scripts/run_aligner.sh \
        -debug \
        --forceVxSize ${FORCE} \

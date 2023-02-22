@@ -47,8 +47,7 @@ JRC2018_VNC_Unisex1micron="$TemplatesDir/JRC2018_VNC_UNISEX_1micron.nrrd"
 
 memResource=${ALIGNMENT_MEMORY:-"2G"}
 HEADLESS_FIJI_FLAG=${HEADLESS_FIJI_FLAG-"--headless"}
-
-FIJI_OPTS="${HEADLESS_FIJI_FLAG} --ij2 --mem ${memResource} --info --dont-patch-ij1 --no-splash"
+FIJI_OPTS="${HEADLESS_FIJI_FLAG} --ij2 --mem ${memResource}"
 
 TEMPLATE_SELECTOR=1
 if [[ ${TEMPLATE_SELECTOR} == 1 ]]; then
