@@ -198,8 +198,8 @@ mkdir -p "${results_dir}"
 echo "Input filepath: ${input_filepath}"
 input_filename=$(basename "${input_filepath}")
 echo "Input filename: ${input_filename}"
-# replace spaces in the filename
-working_input_filepath=${inputs_dir}/${input_filename/ /_}
+# replace all spaces in the filename
+working_input_filepath=${inputs_dir}/${input_filename// /_}
 echo "Working input file path: ${working_input_filepath}"
 copyInputsCmd="aws s3 cp \"s3://${inputs_s3bucket_name}/${input_filepath}\" \"${working_input_filepath}\" --no-progress"
 
