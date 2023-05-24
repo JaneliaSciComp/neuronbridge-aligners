@@ -45,10 +45,10 @@ testArg=0;
 
 reverseR=1;
 APcheck=1;
-APinv=0; //1 is forcefully inv
+forceAPinv=0; //1 is forcefully inv
 forceUPdown=0; //1 is rotate 180 degree
 
-nameFile="Lco1N2_150219_30G08_SytHA_GFP_nc82_brain_02_original.tif";
+nameFile="Acq1_Da6_KDRT_smOllas_ollasRb488_B1_2023_02_26__12_43_32_bothCh.tif";
 
 // 40x
 
@@ -69,7 +69,7 @@ nameFile="Lco1N2_150219_30G08_SytHA_GFP_nc82_brain_02_original.tif";
 //testArg= "/Users/otsunah/test/20x_brain_alignment/,"+nameFile+",/Users/otsunah/test/20x_brain_alignment/"+nameFile+",/Users/otsunah/Registration/JRC2018_align_test/Template,0.46,1,11,40x,JRC2018,Both_OL_missing (40x),??,false,Signal_amount";
 //testArg= "/Users/otsunah/test/Brain_aligner/prealigned/,"+nameFile+",/Users/otsunah/test/Brain_aligner/"+nameFile+",/Users/otsunah/Dropbox\ \(Personal\)/Hideo_Daily_Coding/Brainaligner_CDMcreator/template,0.468,1,6,40x,JRC2018,Both_OL_missing (40x),??,false,Signal_amount,Max";
 
-//testArg= "A:\\22\\,"+nameFile+",A:\\22\\"+nameFile+",E:\\template,0.18,0.38,14,20x,JRC2018,Both_OL_missing (40x),??,false,Signal_amount";
+//testArg= "G:\\Guest\\Yoshi\\,"+nameFile+",G:\\Guest\\Yoshi\\"+nameFile+",E:\\template,0.18,0.38,14,63x,JRC2018,Intact,??,false,ch1,Median";
 
 //-Lop
 //testArg= "/test/20x_brain_alignment/NoLop/,GMR_13D08_AE_01_13-fA01b_C080304_20080305233708703.zip,/test/20x_brain_alignment/pre_Align_Test_Vol/-Lop/GMR_13D08_AE_01_13-fA01b_C080304_20080305233708703.zip,/Users/otsunah/Documents/otsunah/20x_brain_aligner/,0.46,1,7,20x,JRC2018,Unknown,??"
@@ -244,7 +244,8 @@ if(endsWith(path,"/")!=1){
 	else{
 		print("using loci");
 		run("Bio-Formats Macro Extensions");
-		Ext.openImagePlus(path)
+		Ext.openImagePlus(path);
+		//run("Bio-Formats Windowless Importer", "open="+path+"");
 	}
 }else{
 	print("this is not confocal file");
@@ -256,6 +257,8 @@ if(endsWith(path,"/")!=1){
 afteropen=getTime();
 
 oriname=getTitle();
+
+rename("ThreeD_stack.tif");
 fileopentime=(afteropen-beforeopen)/1000;
 print("file open time; "+fileopentime+" sec");
 
@@ -360,8 +363,14 @@ for (iCh=0; iCh<titlelist.length; iCh++) {
 	if(forceUPdown==1){
 		run("Rotation Hideo headless", "rotate=180 3d in=InMacro interpolation=NONE cpu="+NumCPU+"");
 	}
+
 	
 	if(nSlices>1){
+		
+		if(forceAPinv==1){
+			run("Reverse");
+			run("Flip Horizontally", "stack");
+		}
 		//	cc = substring(chanspec,iCh,iCh+1);
 		print("titlelist[iCh]; "+titlelist[iCh]);
 		UnknownChannel[posicolorNum]=getImageID();
@@ -1788,7 +1797,7 @@ if(SizeM!=0){
 				}
 				
 				nc82=getImageID();
-				
+				print("01 channel; "+resliceLongLength+"   "+finalshiftX+"   "+Zoomratio*MaxZoom+"   "+finalshiftY+"   "+elipsoidAngle+"   "+shrinkTo2010+"   "+cropWidth+"   "+cropHeight+"   "+Ori_widthVx+"   "+Ori_heightVx+"   "+incredepth+"   "+reverseR);
 				rotateshift3D (resliceLongLength,finalshiftX,Zoomratio*MaxZoom,finalshiftY,elipsoidAngle,shrinkTo2010,cropWidth,cropHeight,Ori_widthVx,Ori_heightVx,incredepth,reverseR);
 				
 				run("Properties...", "channels=1 slices="+NC82SliceNum+" frames=1 unit=microns pixel_width=1 pixel_height=1 voxel_depth=1");
@@ -1888,6 +1897,7 @@ if(SizeM!=0){
 			}//if(NRRD_02_ext==0){
 			
 			selectImage(nc82);
+			APinv=0;
 			
 			if(BrainShape=="Both_OL_missing (40x)"){
 				/// template generation ///////////////0.6214809
@@ -2221,7 +2231,7 @@ if(SizeM!=0){
 				//	"do"
 				//		exit();
 				
-				
+				print("02 channel; "+resliceLongLength+"   "+finalshiftX+"   "+Zoomratio*MaxZoom+"   "+finalshiftY+"   "+elipsoidAngle+"   "+shrinkTo2010+"   "+cropWidth+"   "+cropHeight+"   "+Ori_widthVx+"   "+Ori_heightVx+"   "+incredepth+"   "+reverseR);
 				rotateshift3D (resliceLongLength,finalshiftX,Zoomratio*MaxZoom,finalshiftY,elipsoidAngle,shrinkTo2010,cropWidth,cropHeight,Ori_widthVx,Ori_heightVx,incredepth,reverseR);			
 				
 				rename("signalCH.tif");

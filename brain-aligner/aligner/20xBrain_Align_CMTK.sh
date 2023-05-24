@@ -63,7 +63,7 @@ memResource=${ALIGNMENT_MEMORY:-"2G"}
 HEADLESS_FIJI_FLAG=${HEADLESS_FIJI_FLAG-"--headless"}
 FIJI_OPTS="--ij2 --mem ${memResource}"
 
-BrainShape="Both_OL_missing (40x)"
+BrainShape="Intact"
 objective="20x"
 templateBr="JRC2018"
 
@@ -329,8 +329,10 @@ referenceChannel=`yq -r .referenceChannel ${METADATA}`
 echo "NCHANNELS=${NCHANNELS}, referenceChannel=${referenceChannel}"
 
 iniT=${JRC2018_Unisex_Onemicron1}
+transT=UNISEX
+transTST=U
 if [[ ! -e ${JRC2018_Unisexgen1CROPPED} ]]; then
-    cp ${JRC2018_Unisex_Onemicron1} ${JRC2018_Unisexgen1CROPPED}
+    cp ${iniT} ${JRC2018_Unisexgen1CROPPED}
 fi
 
 echo "iniT: $iniT"
@@ -403,10 +405,10 @@ $FIJI --ij2 --mem ${memResource} ${HEADLESS_FIJI_FLAG} -macro $TWELVEBITCONV "${
 ########################################################################################################
 
 banner "JFRC2018 Unisex High-resolution (for color depth search)"
-sig="${OUTPUT}/${InputName}_U_20x_HR"
+sig="${OUTPUT}/${InputName}_${transTST}_20x_HR"
 DEFFIELD=${registered_warp_xform}
 
-TEMPLATE="${TemplatesDir}/JRC2018_UNISEX_20x_HR.nrrd"
+TEMPLATE="${TemplatesDir}/JRC2018_${transT}_20x_HR.nrrd"
 
 gsig="${OUTPUT}/${InputName}"
 
