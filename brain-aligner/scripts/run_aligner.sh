@@ -89,10 +89,7 @@ done
 
 umask 0002
 
-default_fb_mode="xvfb"
 export NSLOTS=${NSLOTS:-$nslots}
-export FB_MODE=${FB_MODE:-$default_fb_mode}
-echo "Use FB_MODE=${FB_MODE}"
 
 export WORKING_DIR="${output_dir}/temp"
 echo "Create working directory ${WORKING_DIR}"
@@ -115,8 +112,7 @@ function cleanTemp {
     fi
 }
 
-source ${XVFB_HELPER_SCRIPTS_DIR}/setup_xvfb.sh
-function exitHandler() { exitXvfb; cleanTemp; }
+function exitHandler() { cleanTemp; }
 trap exitHandler EXIT
 
 ALIGNMENT_OUTPUT=${ALIGNMENT_OUTPUT:-"${output_dir}/aligned"}

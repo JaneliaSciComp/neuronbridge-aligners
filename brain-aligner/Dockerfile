@@ -63,8 +63,6 @@ ENV XVFB_HELPER_SCRIPTS_DIR=/opt/xvfb_helper_scripts
 
 COPY xvfb_helper_scripts ${XVFB_HELPER_SCRIPTS_DIR}
 
-ENV FB_MODE=
-
 # copy alignment scripts
 COPY aligner /opt/aligner
 COPY scripts /opt/aligner-scripts
