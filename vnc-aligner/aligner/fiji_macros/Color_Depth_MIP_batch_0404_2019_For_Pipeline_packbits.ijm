@@ -22,7 +22,7 @@ argstr=" ";
 DeleteOrMove="DontMove";//"Delete", "Move","DontMove"
 logsave=0;
 FolderNameAdd=false;
-saveFormat="png";//"tif","png","tif_packbits" tif means PackBits
+saveFormat="tif";//"tif","png","tif_packbits" tif means PackBits
 nonc82=true;// if true, no CDM from the last channel
 gammavalue=1.1;
 easyADJ=false; // true for segmented 3D volume
@@ -97,7 +97,6 @@ if(savedirext!=1){
 }
 
 
-run("Close All");
 
 
 JFRCexist=File.exists(MaskDir);

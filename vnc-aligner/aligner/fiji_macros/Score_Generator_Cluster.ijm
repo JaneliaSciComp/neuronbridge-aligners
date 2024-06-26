@@ -34,7 +34,9 @@ temppath = args[3];
 
 NumCPU=round(NumCPU);
 
-
+print("savedir; "+savedir);
+print("path; "+path);
+print("temppath; "+temppath);
 
 tempMaskpath=0; tempMaskFilename=0;
 
@@ -306,27 +308,8 @@ if(endsWith(path,".tif") || endsWith(path,".h5j") || endsWith(path,".v3dpbd") ||
 	
 	File.saveString(OBJscore,savedir+truename+"_Score.property");
 	
-	selectWindow("RGB");
-	close();
-	
 	
 }//if(endsWith(listFolder[iF],".tif") || endsWith(listFolder[iF],".h5j") || endsWith(listFolder[iF],".v3dpbd"  || nc82Nrrd!=-1)){
-
-
-titlelist=getList("image.titles");
-
-for(iclose=0; iclose<nImages; iclose++){
-	
-	print("titlelist[iclose]; "+titlelist[iclose]);
-	
-	if(titlelist[iclose]!=tempFilename && titlelist[iclose]!=tempMaskFilename){
-		if(isOpen(titlelist[iclose])){
-			selectWindow(titlelist[iclose]);
-			close();
-			print(titlelist[iclose]+"  closed");
-		}
-	}
-}
 
 
 
@@ -471,7 +454,6 @@ function Score3D (NumCPU,stack,temppath,tempMaskpath,tempFilename,tempMaskFilena
 //	File.saveString(logsum, filepath);
 }
 
-run("Close All");
 run("Misc...", "divide=Infinity save");
 
 run("Quit");

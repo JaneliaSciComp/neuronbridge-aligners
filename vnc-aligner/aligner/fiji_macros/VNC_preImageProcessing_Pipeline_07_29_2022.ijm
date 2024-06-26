@@ -14,13 +14,14 @@ AdvanceDepth=true;// true,false,  depth vx size adjustment
 //StackWidth=600;
 //StackHeight=1024;
 ShapeProblem=0;
+UPsideDown = 0;//1;// 1 is up side down
 
-nc82decision="Signal_amount";//"Signal_amount","ch1","ch2","ch3","ch4"
+nc82decision="ch2";//"Signal_amount";//"Signal_amount","ch1","ch2","ch3","ch4"
 
 // Arguments
 
 argstr=0;
-inputfile="VNC_flip_03032022FlipTN1_MFlipDmel22B_40X.zip";
+inputfile="test.oir";
 
 //argstr="D:"+File.separator+",I1_ZB49_T1,D:"+File.separator+"Dropbox (HHMI)"+File.separator+"VNC_project"+File.separator+"VNC_Lateral_F.tif,C:"+File.separator+"I2_ZB50_T1.v3draw,sr,0.2965237,0.2965237,f"//for test
 
@@ -32,7 +33,7 @@ inputfile="VNC_flip_03032022FlipTN1_MFlipDmel22B_40X.zip";
 //argstr="/Users/otsunah/test/VNC_aligner_local_ver/output/,"+inputfile+",/Users/otsunah/test/VNC_aligner_local_ver/Template/,/Users/otsunah/test/VNC_aligner_local_ver/"+inputfile+",sr,f,/test/VNC_Test/Sample/ConsolidatedLabel.v3dpbd,8,true,Signal_amount"//for test
 
 //for M2 air
-//argstr="/Users/otsunah/test/VNC_aligner/PreAligned/,"+inputfile+",/Users/otsunah/Dropbox\ (HHMI)/VNC_project/VNC_aligner_local_ver/Template/,/Users/otsunah/Dropbox\ (HHMI)/VNC_project/VNC_aligner_local_ver/"+inputfile+",sr,f,/test/VNC_aligner/Sample/ConsolidatedLabel.v3dpbd,6,true,Signal_amount";//for test
+//argstr="/Users/otsunah/test/VNC_aligner_local_ver/output/,"+inputfile+",/Users/otsunah/Dropbox\ (HHMI)/VNC_project/VNC_aligner_local_ver/Template/,/Users/otsunah/test/VNC_aligner_local_ver/sample/"+inputfile+",sr,f,/test/VNC_aligner/Sample/ConsolidatedLabel.v3dpbd,6,true,Signal_amount";//for test
 
 
 if(argstr!=0)
@@ -51,7 +52,7 @@ numCPU=args[7];
 ShapeAnalysis=args[8];//true or false
 nc82decision=args[9];//"Signal_amount","ch1","ch2","ch3","ch4"
 
-ShapeAnalysis="true";//"false","true"
+ShapeAnalysis="false";//"true";//"false"
 
 numCPU=round(numCPU);
 numCPU=numCPU-1;
@@ -115,7 +116,6 @@ List.clear();
 // open files //////////////////////////////////			
 filesize=File.length(path);
 
-//print(path);
 setBatchMode(true);
 
 if(filesize>1000000){// if more than 1MB
@@ -125,13 +125,15 @@ if(filesize>1000000){// if more than 1MB
 	
 	cziIndex = lastIndexOf(path, ".czi");
 	nd2Index = lastIndexOf(path, ".nd2");
+	oirIndex = lastIndexOf(path, ".oir");
 	
-	
-	if(cziIndex==-1 && nd2Index==-1)
+	if(cziIndex==-1 && nd2Index==-1 && oirIndex==-1)
 	open(path);// for tif, comp nrrd, lsm", am, v3dpbd, mha
-	else
-	run("Bio-Formats Importer", "open="+path+" autoscale color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT");
-	
+	else{
+		print("Using Loci");
+		run("Bio-Formats Importer", "open="+path+" autoscale color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT");
+		
+	}
 	
 	print("Opened File");
 	logsum=getInfo("log");
@@ -151,7 +153,7 @@ origi=getTitle();
 //		C1C20102Takeout(takeout);
 noext = prefix;
 
-God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,LateralDir,PathConsolidatedLabel,numCPU,path,ShapeAnalysis);
+God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,LateralDir,PathConsolidatedLabel,numCPU,path,ShapeAnalysis,UPsideDown);
 
 //nrrd2v3draw(savedir, noext);
 
@@ -168,7 +170,7 @@ print("quit does not work! images "+nImages());
 //newImage("Untitled", "8-bit black", 360, 490, 2);
 run("quit plugin");
 
-function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,LateralDir,PathConsolidatedLabel,numCPU,path,ShapeAnalysis){
+function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,LateralDir,PathConsolidatedLabel,numCPU,path,ShapeAnalysis,UPsideDown){
 	
 	bitd=bitDepth();
 	CLAHEwithMASK=1;
@@ -178,7 +180,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 	lowthreAveRange=20;
 	previousnSlice=0;
 	FrontAndBack=0;// reversed stack
-	UPsideDown = 0;
+	
 	
 	if (bitd==8){
 		setMinAndMax(0, 255);
@@ -1467,7 +1469,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 				if(startslice==endslice || sliceGap<40)
 				endslice=startslice+110;
 				
-				print("startslice; "+startslice+"  endslice; "+endslice+"  slices; "+slices);
+				print("startslice; "+startslice+"  endslice; "+endslice+"  slices; "+slices+"  previousnSlice; "+previousnSlice);
 				
 				if(isOpen(postskelton)){
 					selectWindow(postskelton);
@@ -1497,11 +1499,13 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 				Rendslice=slicePosition[4];
 				previousnSlice=slicePosition[5];
 				
+				print("Rstartslice; "+Rstartslice+"  Rendslice; "+Rendslice);
+				
 				//			setBatchMode(false);
 				//				updateDisplay();
 				//				"do"
 				//			exit();
-				print("Rstartslice; "+Rstartslice+"  Rendslice; "+Rendslice);
+				
 				/// Front & Back detection //////////////////////////////////////////
 				if(FrontBackAnalysis==1){
 					selectImage(Mask);
@@ -1578,22 +1582,8 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 				CLEAR_MEMORY();
 				selectImage(DUP);
 				
-				//			if(Rstartslice<Rendslice)
-				//			run("Make Substack...", "  slices="+Rstartslice+"-"+Rendslice+"");
-				
-				//				setBatchMode(false);
-				//			updateDisplay();
-				//				"do"
-				//				exit();
-				
 				realVNC=getImageID();
 				realVNCtitle=getTitle();
-				
-				
-				//	selectImage(realVNC);
-				//	rename(nc82);
-				
-				
 				
 				if(FrontBackAnalysis==1){
 					if(aveCircR>aveCircF){//if rear is ventral slice
@@ -1871,9 +1861,20 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 						
 						if(AdvanceDepth){
 							
+							//			setBatchMode(false);
+							//			updateDisplay();
+							//			"do"
+							//			exit();
+							
 							run("Reslice [/]...", "output=1 start=Left rotate avoid");
 							lateralNC82stack=getImageID();
 							lateralNC82stackST=getTitle();
+							
+							//			setBatchMode(false);
+							//					updateDisplay();
+							//						"do"
+							//						exit();
+							
 							
 							run("Z Project...", "projection=[Max Intensity]");
 							lateralNC82MIP=getImageID();
@@ -1900,13 +1901,18 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							//			"do"
 							//			exit();
 							
-							defaultWidth=(sampWidth*depthVXsmall)/(sampHeight/100);//309*0.2965/18  = 5
+							defaultWidth=(sampWidth*depthVXsmall);///(sampHeight/100);//309*0.2965/18  = 5
 							startWidth=defaultWidth;
 							
 							print("sampWidth; "+sampWidth+"   sampHeight; "+sampHeight+"   nImages;"+nImages()+"   defaultWidth; "+defaultWidth);
 							
-							if(defaultWidth>30)
-							startWidth=20;
+							//		setBatchMode(false);
+							//					updateDisplay();
+							//					"do"
+							//					exit();
+							
+							//	if(defaultWidth>30)
+							//	startWidth=20;
 							
 							if(temptype=="f")
 							tempimg="VNC_Lateral_F.tif";
@@ -1931,20 +1937,28 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							
 							maxH=round((sampHeight/heightSizeRatio)*0.7);//ElongArray[0];
 							OBJScorePre=0;
+							FlipPosi=0; BestWithOriginalVal=0;
 							
 							for(startW=round(startWidth-5); startW<round(startWidth)*4; startW++){
 								print("");
-								print("startW; "+startW +"   nImages;"+nImages+"   width="+round(startW*(0.6214809/widthVXsmall))+"   maxH; "+maxH);
+								print("startW; "+startW +"   nImages;"+nImages+"   width="+round(startW*(0.6214809/depthVXsmall))+"   maxH; "+maxH);
 								
 								selectImage(lateralNC82stack);
 								selectWindow(lateralNC82stackST);
 								run("Duplicate...", "duplicate");
 								
-								run("Size...", "width="+round(startW*(0.6214809/widthVXsmall))+" height="+maxH+" depth=100 interpolation=None");// width 5 is for hight length measurement
+								run("Size...", "width="+round(startW*(0.6214809/depthVXsmall))+" height="+maxH+" depth=100 interpolation=None");// width 5 is for hight length measurement
 								
 								Dupstack=getImageID();
 								DupstackST=getTitle();
 								run("Z Project...", "start=30 stop=70 projection=[Max Intensity]");
+								
+								//		if(startW==199){
+								//								setBatchMode(false);
+								//								updateDisplay();
+								//								"do"
+								//								exit();
+								//							}
 								
 								
 								run("Minimum 3D...", "x=2 y=2 z=1");
@@ -1952,63 +1966,59 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 								
 								run("Subtract Background...", "rolling=10 disable");
 								
-					//			if(startW==24){
-						//			setBatchMode(false);
-							//		updateDisplay();
-							//		"do"
-							//		exit();
-							//	}
-								
-								
-								
-								//	setBatchMode(false);
-								//			updateDisplay();
-								//			"do"
-								//			exit();
-								
-								
 								DUP2=getImageID();
 								
 								rename("DUPnc82.tif");
 								run("16-bit");
 								
 								getVoxelSize(widthVXsmall2, heightVXsmall2, depthVXsmall2, unitVX);
-								print("small image width; "+round(startW*(0.6214809/widthVXsmall))+"   widthVXsmall2; "+widthVXsmall2+"   heightVXsmall2; "+heightVXsmall2);
+								print("small image width; "+round(startW*(0.6214809/depthVXsmall))+"   widthVXsmall2; "+widthVXsmall2+"   heightVXsmall2; "+heightVXsmall2);
 								
 								run("Canvas Size...", "width=60 height=100 position=Center zero");
 								
-					//					if(startW==16){
-					//						setBatchMode(false);
-					//						updateDisplay();
-					//						"do"
-					//						exit();
-					//					}
-								
 								if(isOpen("DUPnc82.tif")){
 									// for new jar version
-									//		run("Image Correlation Atomic", "samp=DUPnc82.tif temp="+tempimg+" +="+PlusRot+" -="+MinusRot+" overlap="+100-MaxShiftABS-10+" parallel=4 rotation=1 calculation=[OBJ peasonCoeff] weight=[Equal weight (temp and sample)]");
-									run("Image Correlation Atomic EQ", "samp=DUPnc82.tif temp="+tempimg+" +="+PlusRot+" -="+MinusRot+" overlap="+100-MaxShiftABS-10+" parallel=4 rotation=1 calculation=[OBJPeasonCoeff]");
+									//	run("Image Correlation Atomic", "samp=DUPnc82.tif temp="+tempimg+" +="+PlusRot+" -="+MinusRot+" overlap="+100-MaxShiftABS-10+" parallel=4 rotation=1 calculation=[OBJ peasonCoeff] weight=[Equal weight (temp and sample)]");
+									run("Image Correlation Atomic EQ", "samp=DUPnc82.tif temp="+tempimg+" +="+PlusRot+" -="+MinusRot+" overlap="+100-MaxShiftABS-10+" parallel=4 rotation=1 calculation=OBJPeasonCoeff");
+									wait(10);
 									
-									//		wait(10);
+									resultstringST = call("Image_Correlation_Atomic_EQ.getResult");
+									resultstring=split(resultstringST,",");
 									
-									stringImageCorrelation = call("Image_Correlation_Atomic_EQ.getResult");
-									print("1993; stringImageCorrelation; "+stringImageCorrelation);
-									paramImgCore=split(stringImageCorrelation,",");
+									print("resultstringST; "+resultstringST);
+									OBJScore=parseFloat(resultstring[3]);//Chaneg string to number
+									Rot=parseFloat(resultstring[2]);
+									ShiftY=parseFloat(resultstring[1]);
+									ShiftX=parseFloat(resultstring[0]);
 									
-									if(paramImgCore.length>1){
-										ShiftX=parseFloat(paramImgCore[0]);
-										ShiftY=parseFloat(paramImgCore[1]);
-										Rot=parseFloat(paramImgCore[2]);
-										OBJScore=parseFloat(paramImgCore[3]);
-										
-										print("ShiftX; "+ShiftX+"   ShiftY; "+ShiftY+"   Rot; "+Rot+"   OBJScore; "+OBJScore);
+									selectWindow("DUPnc82.tif");
+									run("Flip Horizontally");
+									
+									run("Image Correlation Atomic EQ", "samp=DUPnc82.tif temp="+tempimg+" +="+PlusRot+" -="+MinusRot+" overlap="+100-MaxShiftABS-10+" parallel=4 rotation=1 calculation=OBJPeasonCoeff");
+									wait(10);
+									
+									resultstringST = call("Image_Correlation_Atomic_EQ.getResult");
+									resultstring=split(resultstringST,",");
+									
+									print("resultstringST; "+resultstringST);
+									OBJScoreFlip=parseFloat(resultstring[3]);//Chaneg string to number
+									
+									if(OBJScoreFlip>OBJScore){
+										OBJScore=parseFloat(resultstring[3]);//Chaneg string to number
+										Rot=parseFloat(resultstring[2]);
+										ShiftY=parseFloat(resultstring[1]);
+										ShiftX=parseFloat(resultstring[0]);
+										FlipPosi=FlipPosi+1;
 									}else{
-										OBJScore=0;
-										//	setBatchMode(false);
-										//		updateDisplay();
-										//		"do"
-										//		exit();
+										FlipPosi=FlipPosi-1;
 									}
+									
+									//				if(startW==199){
+									//					setBatchMode(false);
+									//					updateDisplay();
+									//					"do"
+									//					exit();
+									//				}
 									
 									if(OBJScorePre==0){
 										OBJScorePre=OBJScore;
@@ -2021,8 +2031,8 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 									OBJScorePrePre=OBJScorePre;
 									OBJScorePre=OBJScore;
 									
-									if(maxOBJ<aveOBJScore){
-										nonmaxOBJtime=0;
+									if(maxOBJ<=aveOBJScore){
+										nonmaxOBJtime=1;
 										maxOBJ=aveOBJScore;
 										maxW=startW;
 										maxY=ShiftY;
@@ -2036,19 +2046,10 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 										MaxShiftABS=abs(maxY);
 										
 										getVoxelSize(Mvxwidth, Mvxheight, Mdepth, unit1);
-										BestWidth=round(startW*(0.6214809/widthVXsmall));
-									
+										BestWidth=round((startW-1)*(0.6214809/depthVXsmall));
+										BestWithOriginalVal=startW-1;
 									}
 									
-									//	if(nonmaxOBJtime==3){
-									
-									//		selectWindow("DUPnc82.tif");
-									//		saveAs("PNG", savedir+noext+"_Lateral_Small.png");
-									//		setBatchMode(false);
-									//		updateDisplay();
-									//		"do"
-									//		exit();
-									//	}
 									selectImage(DUP2);
 									close();
 								}else//	if(isOpen("DUPnc82.tif")){
@@ -2068,6 +2069,10 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 										close();
 									}
 								}//	for(iclose=0; iclose<3; iclose++){
+								
+								if(maxOBJ>900 && aveOBJScore<870)
+								break;
+								
 							}//	for(startW=round(startWidth); startW<round(startWidth)*4; startW++){
 							
 							print(" 1701; nImages; "+nImages);
@@ -2075,13 +2080,27 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							logsum=getInfo("log");
 							File.saveString(logsum, filepath);
 							
-							print("BestWidth; "+BestWidth);
+							print("BestWidth; "+BestWidth+"  BestWithOriginalVal; "+BestWithOriginalVal+"  maxrotation; "+maxrotation+"  FlipPosi;"+FlipPosi);
 							
-							ElongArray=newArray(0,0,BestWidth);
+							selectImage(lateralNC82stack);
+							
+							if(FlipPosi>3){
+								run("Flip Horizontally", "stack");
+								print("DV flip");
+							}
+							
+							//		setBatchMode(false);
+							//				updateDisplay();
+							//				"do"
+							//				exit();
+							
+							ElongArray=newArray(0,0,BestWidth,0,0);
 							Helongate (ElongArray,sampHeight,heightSizeRatio,lateralNC82stack,tempimg,lateralNC82stackST);
 							
 							maxH=ElongArray[0];
 							Mvxheight=ElongArray[1];
+							//	FlipPosi=ElongArray[3];
+							MaxLaterealRot=ElongArray[4];
 							
 							for(iclose=0; iclose<3; iclose++){
 								if(isOpen(lateralNC82MIP)){
@@ -2092,61 +2111,44 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							
 							selectImage(lateralNC82stack);
 							
-							//		setBatchMode(false);
-							//					updateDisplay();
-							//						"do"
-							//						exit();
+							print(  "sampWidth; "+sampWidth+"  sampHeight;"+sampHeight+"  currentW; "+getWidth+" currentH; "+getHeight);
+							print("Mvxwidth; "+Mvxwidth+"  Mvxheight; "+Mvxheight+"  vxheight; "+vxheight);
 							
-						realdepthVal=(6.4/Mvxwidth)/(1/depth);//*depth
+							realdepthVal=(6.4/Mvxwidth)*depthVXsmall;//*depth 6.4 is template lateral small MIP vx width
 							realHeightVal=(6.3828/Mvxheight)*vxheight;
 							
-							if(realHeightVal<vxheight*0.9 || realHeightVal>vxheight*1.2)
-							realHeightVal=vxheight;
+							run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+realdepthVal+" pixel_height="+realHeightVal+" voxel_depth="+realHeightVal+"");
 							
-							maxrotation=maxrotation/(realdepthVal/widthVXsmall);
+							finalXsize=round(getWidth*realdepthVal);// 1 micron for CMTK
+							finalYsize=round(getHeight*realHeightVal);// 1 micron for CMTK
+							finalZsize=round(nSlices*realHeightVal);
 							
-							print("Mvxwidth; "+Mvxwidth+"   depth; "+depth);
-							print("maxrotation; "+maxrotation+"   realdepthVal; "+realdepthVal+"   realHeightVal; "+realHeightVal);//"  realdepthVal/widthVXsmall; "+realdepthVal/widthVXsmall	
+							print("realdepthVal; "+realdepthVal+"realHeightVal; "+realHeightVal+"  finalXsize; "+finalXsize+"  finalYsize; "+finalYsize);
 							
-							if(maxrotation!=0){//+NextRotation
-								getVoxelSize(OriSampWidth, OriSampHeight, OriSampDepth, OriSampUnit);
-								run("Canvas Size...", "width="+sampleLongLength+" height="+sampleLongLength+" position=Center zero");
-								if(bitd==8)
-								run("16-bit");
-								
-								//+NextRotation
-								run("Rotation Hideo headless", "rotate="+maxrotation+" 3d in=InMacro interpolation=BICUBIC cpu="+numCPU+"");
-								run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+OriSampWidth+" pixel_height="+OriSampHeight+" voxel_depth="+OriSampDepth+"");
-							}//	if(rotationOriginal>0){
+				//			setBatchMode(false);
+				//			updateDisplay();
+				//			"do"
+					//		exit();
 							
-							//		setBatchMode(false);
-							//				updateDisplay();
-							//				"do"
-							//				exit();
+							// translation & rotation with max image size, then resize to final desired size 
+							letaralTransRotation (MaxLaterealRot,numCPU,finalXsize,finalYsize,finalZsize,realdepthVal,realHeightVal,maxX,maxY,maxH,BestWidth);
 							
-							print(" 1703; nImages; "+nImages);
+							lateralNC82stack=getImageID();
+							
+							//				if(realHeightVal<vxheight*0.9 || realHeightVal>vxheight*1.2)
+							//				realHeightVal=vxheight;
+							
+							print("MaxLaterealRot; "+MaxLaterealRot+"   realdepthVal; "+realdepthVal+"   realHeightVal; "+realHeightVal);//"  realdepthVal/widthVXsmall; "+realdepthVal/widthVXsmall	
+
+				//						setBatchMode(false);
+				//								updateDisplay();
+				//								"do"
+				//								exit();
+							
+							print(" 1703; nImages; "+nImages+"  realdepthVal;"+realdepthVal+"  realHeightVal; "+realHeightVal+"round(getWidth*realdepthVal); "+round(getWidth*realdepthVal)+"  round(getHeight*realHeightVal); "+round(getHeight*realHeightVal)+"  Mvxwidth; "+Mvxwidth);
 							PrintWindows ();
 							selectImage(lateralNC82stack);
-							
-							XlateralTrans = round(maxX*(sampWidth/(BestWidth*(0.6214809/widthVXsmall))));
-							YlateralTrans =0;// round(maxY*((getHeight*realHeightVal)/maxH));
-							
-							print("maxX lateral; "+maxX+"  X trans; "+XlateralTrans+"   maxY; "+maxY+"   maxH; "+maxH+"   Y trans; "+YlateralTrans);
-							run("Translate...", "x="+XlateralTrans+" y="+YlateralTrans+" interpolation=None stack");//round(maxX*(sampHeight/100)*(defaultWidth/maxW))
-							
-							//		setBatchMode(false);
-							//		updateDisplay();
-							//		"do"
-							//		exit();
-							
-							run("Canvas Size...", "width="+sampWidth+" height="+sampHeight+" position=Center zero");
-							
-							run("Duplicate...", "duplicate");
-							
-							run("Size...", "width="+round(getWidth*realdepthVal)+" height="+round(getHeight*realHeightVal)+" depth=100 interpolation=None");
-							//run("Median...", "radius=10 stack");
-							
-							Dupstack=getImageID();
+									
 							
 							run("Z Project...", "projection=[Max Intensity]");
 							run("Minimum 3D...", "x=10 y=10 z=1");
@@ -2157,14 +2159,13 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							
 							lateralNC82MIP2=getImageID();
 							
-							//	setBatchMode(false);
-							//						updateDisplay();
-							//							"do"
-							//							exit();
+							//		setBatchMode(false);
+							//		updateDisplay();
+							//		"do"
+							//		exit();
 							
-							
-							selectImage(Dupstack);
-							close();
+							//			selectImage(Dupstack);
+							//			close();
 							
 							selectImage(lateralNC82MIP2);
 							
@@ -2184,7 +2185,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 						else if(min!=0 && max!=4095 && bitd==16)
 						run("Apply LUT");
 						
-						//	if(bitd==16)
+						if(bitd==16)
 						run("8-bit");
 						saveAs("PNG", savedir+noext+"_Lateral.png");
 						close();
@@ -2193,11 +2194,23 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 						selectImage(lateralNC82stack);
 						//realdepthVal=(maxW/defaultWidth)*0.7;//0.7 is temp depth
 						if(AdvanceDepth){
-							run("Reslice [/]...", "output=1 start=Left rotate avoid");
-							run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+realHeightVal+" pixel_height="+realHeightVal+" voxel_depth="+realdepthVal+"");
-							//setVoxelSize(widthVXsmall, heightVXsmall, realdepthVal, unitVX);
+							
+							print("realHeightVal; "+realHeightVal+"   realdepthVal; "+realdepthVal);
+							
+							//				setBatchMode(false);
+							//			updateDisplay();
+							//			"do"
+							//		exit();
+							
+							run("Reslice [/]...", "output=1 start=Left rotate");// its already shrink to 1 micron issu 
+							//					run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+realHeightVal+" pixel_height="+realHeightVal+" voxel_depth="+realdepthVal+"");
 							
 							realVNC=getImageID();
+							
+							//			setBatchMode(false);
+							//						updateDisplay();
+							//							"do"
+							//							exit();
 							
 							print("");
 							print("Mvxwidth; "+Mvxwidth+"   Mvxheight; "+Mvxheight+"   Mdepth; "+Mdepth);
@@ -2218,9 +2231,9 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 					run("16-bit");
 					
 					//resize to 1 micron xy
-					getVoxelSize(VxW, VxH, VxD, VxUnit);
-					shrink_ratio=VxW/1;
-					run("Size...", "width="+round(getWidth*shrink_ratio)+" height="+round(getHeight*shrink_ratio)+" depth="+nSlices+" interpolation=Bicubic");
+					//		getVoxelSize(VxW, VxH, VxD, VxUnit);
+					//		shrink_ratio=VxW/1;
+					//			run("Size...", "width="+round(getWidth*shrink_ratio)+" height="+round(getHeight*shrink_ratio)+" depth="+nSlices+" interpolation=Bicubic");
 					
 					
 					if(ShapeProblem==0){
@@ -2231,22 +2244,14 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 						run("Nrrd Writer", "compressed nrrd="+savedir+noext+"_Rev_01.nrrd");
 					}else{//ShapeProblem==1
 						if(FrontAndBack==0)
-						run("Nrrd Writer", "compressed nrrd="+savedir+noext+"_01.nrrd");
+						run("Nrrd Writer", "compressed nrrd="+myDir0+noext+"_01.nrrd");
 						
 						if(FrontAndBack>0)
-						run("Nrrd Writer", "compressed nrrd="+savedir+noext+"_Rev_01.nrrd");
+						run("Nrrd Writer", "compressed nrrd="+myDir0+noext+"_Rev_01.nrrd");
 						
-						savestring="PreAlignerError: Shape Problem.";
-						if(LXminsd>24 || LYminsd>75)
-						savestring=savestring+"\n"+"Left side VNC shape has shape problem!";
-						
-						if(RXminsd>24 || RYminsd>75)
-						savestring=savestring+"\n"+"Right side VNC shape has shape problem!";
-						
-						if(parseFloat(MaxARshape)<1.75)
-						savestring=savestring+"\n"+"The VNC is short!";
-						
-						File.saveString(savestring, savedir+"bad_shape.txt");
+						print("PreAlignerError: Shape Problem.");
+						logsum=getInfo("log");
+						File.saveString(logsum, filepath);
 					}
 					
 					close();
@@ -2303,15 +2308,20 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							
 							print("1850; nSlices; "+nSlices+"  rotation; "+rotation+"  vxwidth; "+vxwidth+"  vxheight; "+vxheight+"  depth; "+depth+"  xTrue; "+xTrue+"  yTrue; "+yTrue);
 							print("1851; StackWidth; "+StackWidth+"  StackHeight; "+StackHeight);
-							
+							print("startslice; "+startslice+"  endslice; "+endslice+"  slices; "+slices+"  previousnSlice; "+previousnSlice);
 							
 							slicePosition=newArray(startslice,endslice,slices,0,0,previousnSlice);
 							addingslice(slicePosition);
 							previousnSlice=slicePosition[5];
 							
-							print("2132 Rendslice; "+Rendslice+"  nSlices; "+nSlices);
+							print("2319 Rstartslice; "+Rstartslice+"  Rendslice; "+Rendslice+"  nSlices; "+nSlices);
 							if(Rendslice>nSlices)
 							Rendslice=nSlices;
+							
+							//		setBatchMode(false);
+							//						updateDisplay();
+							//						"do"
+							//					exit();
 							
 							//		run("Make Substack...", "  slices="+Rstartslice+"-"+Rendslice+"");
 							realNeuron=getImageID();//substack, duplicated
@@ -2329,22 +2339,56 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							run("Rotation Hideo headless", "rotate=180 3d in=InMacro interpolation=BICUBIC cpu="+numCPU+"");
 							
 							if(AdvanceDepth==true){
-								run("Reslice [/]...", "output=1 start=Left rotate avoid");
-								LatarlBigVNC=getImageID();
-								
-								if(maxrotation!=0){//+NextRotation
-									getVoxelSize(OriSampWidth, OriSampHeight, OriSampDepth, OriSampUnit);
-									run("Canvas Size...", "width="+sampleLongLength+" height="+sampleLongLength+" position=Center zero");
-									run("Rotation Hideo headless", "rotate="+maxrotation+" 3d in=InMacro interpolation=BICUBIC cpu="+numCPU+"");
-									run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+OriSampWidth+" pixel_height="+OriSampHeight+" voxel_depth="+OriSampDepth+"");
-								}//	if(rotationOriginal>0){
-								
-								run("Translate...", "x="+XlateralTrans+" y="+YlateralTrans+" interpolation=None stack");
-								run("Canvas Size...", "width="+sampWidth+" height="+sampHeight+" position=Center zero");
-								run("Reslice [/]...", "output=1 start=Left rotate avoid");
 								run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+realHeightVal+" pixel_height="+realHeightVal+" voxel_depth="+realdepthVal+"");
 								
+								//		setBatchMode(false);
+								//						updateDisplay();
+								//					"do"
+								//						exit();
 								
+								run("Reslice [/]...", "output="+realdepthVal+" start=Left rotate avoid");
+								LatarlBigVNC=getImageID();
+								
+								if(FlipPosi>3){
+									run("Flip Horizontally", "stack");
+									print("2349 flip X");
+								}
+								
+							//	setBatchMode(false);
+								//					updateDisplay();
+								//					"do"
+								//						exit();
+								
+								if(realdepthVal>=1)
+								finalXsize=round(getWidth*realdepthVal);// 1 micron for CMTK
+								else
+								finalXsize=getWidth();
+								
+								if(realHeightVal>=1)
+								finalYsize=round(getHeight*realHeightVal);// 1 micron for CMTK
+								else
+								finalYsize=getHeight();
+								
+								finalZsize=nSlices();
+								// translation & rotation with max image size, then resize to final desired size 
+								letaralTransRotation (MaxLaterealRot,numCPU,finalXsize,finalYsize,finalZsize,realdepthVal,realHeightVal,maxX,maxY,maxH,BestWidth);
+								
+
+								print(  "getWidth; "+getWidth+"  getHeight;"+getHeight);
+								
+						//		setBatchMode(false);
+						//		updateDisplay();
+						//		"do"
+						//		exit();
+								
+								run("Reslice [/]...", "output="+realHeightVal+" start=Left rotate avoid");
+					//			run("Size...", "width="+getWidth+" height="+getHeight+" depth="+Rendslice+" interpolation=Bicubic");
+								
+						//		setBatchMode(false);
+						//				updateDisplay();
+						//				"do"
+						//				exit();
+									
 								realNeuron2=getImageID();
 							}//if(AdvanceDepth){
 							
@@ -2355,7 +2399,6 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 								run("Max value");
 								maxvalue = call("Max_value.getResult");
 								maxvalue=parseInt(maxvalue);
-								
 								
 								print("   Detected2 Max; "+maxvalue);
 								
@@ -2372,10 +2415,10 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 								run("Nrrd Writer", "compressed nrrd="+savedir+noext+"_0"+exportchannel+1+".nrrd");
 							}else{//ShapeProblem==1
 								if(FrontAndBack>0)
-								run("Nrrd Writer", "compressed nrrd="+savedir+noext+"_Rev_0"+exportchannel+1+".nrrd");
+								run("Nrrd Writer", "compressed nrrd="+myDir0+noext+"_Rev_0"+exportchannel+1+".nrrd");
 								
 								if(FrontAndBack==0)
-								run("Nrrd Writer", "compressed nrrd="+savedir+noext+"_0"+exportchannel+1+".nrrd");
+								run("Nrrd Writer", "compressed nrrd="+myDir0+noext+"_0"+exportchannel+1+".nrrd");
 							}
 							
 							if(AdvanceDepth){
@@ -2460,16 +2503,17 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 								run("Reslice [/]...", "output=1 start=Left rotate avoid");
 								LatarlBigVNC=getImageID();
 								
-								if(maxrotation!=0){
+								run("Translate...", "x="+XlateralTrans+" y="+YlateralTrans+" interpolation=None stack");
+								run("Canvas Size...", "width="+sampWidth+" height="+sampHeight+" position=Center zero");
+								
+								if(MaxLaterealRot!=0){//+NextRotation
 									getVoxelSize(OriSampWidth, OriSampHeight, OriSampDepth, OriSampUnit);
-									run("Canvas Size...", "width="+sampleLongLength+" height="+sampleLongLength+" position=Center zero");
-									run("Rotation Hideo headless", "rotate="+maxrotation+" 3d in=InMacro interpolation=BICUBIC cpu="+numCPU+"");
-									
+									//	run("Canvas Size...", "width="+sampleLongLength+" height="+sampleLongLength+" position=Center zero");
+									run("Rotation Hideo headless", "rotate="+MaxLaterealRot+" 3d in=InMacro interpolation=BICUBIC cpu="+numCPU+"");
 									run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+OriSampWidth+" pixel_height="+OriSampHeight+" voxel_depth="+OriSampDepth+"");
 								}//	if(rotationOriginal>0){
 								
-								run("Translate...", "x="+XlateralTrans+" y="+YlateralTrans+" interpolation=None stack");
-								run("Canvas Size...", "width="+sampWidth+" height="+sampHeight+" position=Center zero");
+								
 								run("Reslice [/]...", "output=1 start=Left rotate avoid");
 								run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+realHeightVal+" pixel_height="+realHeightVal+" voxel_depth="+realdepthVal+"");
 								
@@ -2484,10 +2528,10 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 								run("Nrrd Writer", "compressed nrrd="+savedir+"ConsolidatedLabel.nrrd");
 							}else{//ShapeProblem==1
 								if(FrontAndBack>0)
-								run("Nrrd Writer", "compressed nrrd="+savedir+"ConsolidatedLabel__Rev.nrrd");
+								run("Nrrd Writer", "compressed nrrd="+myDir0+"ConsolidatedLabel__Rev.nrrd");
 								
 								if(FrontAndBack==0)
-								run("Nrrd Writer", "compressed nrrd="+savedir+"ConsolidatedLabel.nrrd");
+								run("Nrrd Writer", "compressed nrrd="+myDir0+"ConsolidatedLabel.nrrd");
 							}
 							
 							selectImage(realNeuron);
@@ -2633,20 +2677,18 @@ function Helongate (ElongArray,sampHeight,heightSizeRatio,lateralNC82stack,tempi
 	maxW=0; maxOBJ=0; nonmaxOBJtime=0; MinusRot=15; PlusRot=15; maxrotation=0; MaxShiftABS=10; NextRotation=0;
 	for(startH=round((sampHeight/heightSizeRatio)/2); startH<120; startH++){
 		print("");
-		print("startH; "+startH +"   nImages;"+nImages);
+		print("startH; "+startH +"   nImages;"+nImages+"  ElongArray[2]; "+ElongArray[2]);
 		selectImage(lateralNC82stack);
 		selectWindow(lateralNC82stackST);
 		
 		run("Duplicate...", "duplicate");
 		
-		run("Size...", "width="+ElongArray[2]+" height="+round(startH)+" depth=100 interpolation=None");// width 5 is for hight length measurement
-		//	run("Size...", "width=18 height=80 depth=100 constrain average interpolation=Bilinear");
-		//run("Median...", "radius=10 stack");
+		//	setBatchMode(false);
+		//	updateDisplay();
+		//	"do"
+		//	exit();
 		
-		//		setBatchMode(false);
-		//		updateDisplay();
-		//		"do"
-		//		exit();
+		run("Size...", "width="+ElongArray[2]+" height="+round(startH)+" depth=100 interpolation=None");// width 5 is for hight length measurement
 		
 		Dupstack=getImageID();
 		DupstackST=getTitle();
@@ -2664,31 +2706,30 @@ function Helongate (ElongArray,sampHeight,heightSizeRatio,lateralNC82stack,tempi
 		run("Canvas Size...", "width=60 height=100 position=Center zero");
 		rename("DUPnc82.tif");
 		
-//		if(startH==119){
-//			setBatchMode(false);
-//			updateDisplay();
-//			"do"
-	//		exit();
-	//	}
+		//	setBatchMode(false);
+		//	updateDisplay();
+		//	"do"
+		//	exit();
+		
+		//	if(startH==46){
+		//		setBatchMode(false);
+		//		updateDisplay();
+		//		"do"
+		//		exit();
+		//	}
 		
 		if(isOpen("DUPnc82.tif")){
 			// for new jar version
-			//		run("Image Correlation Atomic", "samp=DUPnc82.tif temp="+tempimg+" +="+PlusRot+" -="+MinusRot+" overlap="+100-MaxShiftABS-10+" parallel=4 rotation=1 calculation=[OBJ peasonCoeff] weight=[Equal weight (temp and sample)]");
-			run("Image Correlation Atomic EQ", "samp=DUPnc82.tif temp="+tempimg+" +="+PlusRot+" -="+MinusRot+" overlap="+100-MaxShiftABS-10+" parallel=4 rotation=1 calculation=[OBJPeasonCoeff]");
+			run("Image Correlation Atomic EQ", "samp=DUPnc82.tif temp="+tempimg+" +="+PlusRot+" -="+MinusRot+" overlap="+100-MaxShiftABS-10+" parallel=4 rotation=1 calculation=OBJPeasonCoeff");
 			
+			resultstringST = call("Image_Correlation_Atomic_EQ.getResult");
+			resultstring=split(resultstringST,",");
 			
-			stringImageCorrelation = call("Image_Correlation_Atomic_EQ.getResult");
-			
-			paramImgCore=split(stringImageCorrelation,",");
-			
-			if(paramImgCore.length>1){
-				ShiftXA[tryN]=parseFloat(paramImgCore[0]);
-				ShiftYA[tryN]=parseFloat(paramImgCore[1]);
-				RotA[tryN]=parseFloat(paramImgCore[2]);
-				OBJScoreA[tryN]=parseFloat(paramImgCore[3]);
-				
-				print("ShiftXA; "+paramImgCore[0]+"   ShiftYA; "+paramImgCore[1]+"   RotA; "+paramImgCore[2]+"   OBJScoreA; "+paramImgCore[3]);
-			}
+			OBJScoreA[tryN]=parseFloat(resultstring[3]);
+			RotA[tryN]=parseFloat(resultstring[2]);
+			ShiftYA[tryN]=parseFloat(resultstring[1]);
+			ShiftXA[tryN]=parseFloat(resultstring[0]);
+			maxHA[tryN]=startH;
 			
 			getVoxelSize(MvxwidthA[tryN], MvxheightA[tryN], Mdepth, unit1);
 			
@@ -2725,6 +2766,9 @@ function Helongate (ElongArray,sampHeight,heightSizeRatio,lateralNC82stack,tempi
 			}
 		}
 		
+		if(maxOBJ>900 && OBJScoreA[tryN]<870)
+		break;
+		
 		tryN=tryN+1;
 	}//for(startH=round(startWidth); startH<round(startWidth)*4; startH++){
 	maxaveOBJ=0; maximax=0;
@@ -2735,12 +2779,16 @@ function Helongate (ElongArray,sampHeight,heightSizeRatio,lateralNC82stack,tempi
 		if(maxaveOBJ<=aveOBJ){
 			maxaveOBJ=aveOBJ;
 			maximax=imax+1;
+			MaxLaterealRot=RotA[maximax];
+			
 		}
 	}//for(imax=0; imax<=OBJScore.length-3; imax++){
 	
-	print("maxH+3; "+maxHA[maximax]+3+"   maxaveOBJ; "+maxaveOBJ);
+	print("maxH+3; "+maxHA[maximax]+3+"   maxaveOBJ; "+maxaveOBJ+"  MaxLaterealRot; "+MaxLaterealRot);
 	ElongArray[0]=maxHA[maximax]+3;
 	ElongArray[1]=MvxheightA[maximax];
+	ElongArray[3]=0;
+	ElongArray[4]=MaxLaterealRot;
 	
 	//	setBatchMode(false);
 	//			updateDisplay();
@@ -2771,6 +2819,80 @@ function rotationF(rotation,unit,vxwidth,vxheight,depth,xTrue,yTrue,StackWidth,S
 	run("Grays");
 }//function
 
+function letaralTransRotation (MaxLaterealRot,numCPU,finalXsize,finalYsize,finalZsize,realdepthVal,realHeightVal,maxX,maxY,maxH,BestWidth){
+	
+	print("finalXsize; "+finalXsize+"  finalYsize; "+finalYsize+"  finalZsize; "+finalZsize);
+	
+	if(realdepthVal<1){
+		XlateralTrans = round(maxX*(getWidth/BestWidth));
+		
+		if(realHeightVal<1){
+			YlateralTrans=round(maxY*(getHeight/maxH));
+			run("Translate...", "x="+XlateralTrans+" y="+YlateralTrans+" interpolation=None stack");//round(maxX*(sampHeight/100)*(defaultWidth/maxW))
+			print("XY moved X; "+XlateralTrans+"  reference moved Y; "+YlateralTrans+"  getWidth; "+getWidth+"  getHeight; "+getHeight);
+			
+			if(MaxLaterealRot!=0)
+			lateralRotOnly(MaxLaterealRot,numCPU);
+			
+			run("Size...", "width="+finalXsize+" height="+finalYsize+" depth="+finalZsize+" interpolation=Bicubic");
+		}//if(realHeightVal<1){
+		
+		if(realHeightVal>=1){
+			run("Translate...", "x="+XlateralTrans+" y=0 interpolation=None stack");
+			run("Size...", "width="+getWidth+" height="+round(getHeight*realHeightVal)+" depth="+nSlices+" interpolation=Bicubic");
+			YlateralTrans=round(maxY*(getHeight/maxH));
+			run("Translate...", "x=0 y="+YlateralTrans+" interpolation=None stack");
+			print("XY moved X; "+XlateralTrans+"  reference moved Y; "+YlateralTrans+"  getWidth; "+getWidth+"  getHeight; "+getHeight);
+			
+			if(MaxLaterealRot!=0)
+			lateralRotOnly(MaxLaterealRot,numCPU);
+			
+			run("Size...", "width="+finalXsize+" height="+finalYsize+" depth="+finalZsize+" interpolation=Bicubic");
+		}//if(realHeightVal>=1){
+		
+	}
+	if(realdepthVal>=1){
+		if(realHeightVal<1){
+			YlateralTrans=round(maxY*(getHeight/maxH));
+			run("Translate...", "x=0 y="+YlateralTrans+" interpolation=None stack");//round(maxX*(sampHeight/100)*(defaultWidth/maxW))
+			run("Size...", "width="+round(getWidth*realdepthVal)+" height="+getHeight+" depth="+nSlices+" interpolation=Bicubic");// this makes XY 1µm
+			XlateralTrans = round(maxX*(getWidth/BestWidth));
+			run("Translate...", "x="+XlateralTrans+" y=0 interpolation=None stack");//round(maxX*(sampHeight/100)*(defaultWidth/maxW))
+			print("XY moved X; "+XlateralTrans+"  reference moved Y; "+YlateralTrans+"  getWidth; "+getWidth+"  getHeight; "+getHeight);
+			
+			if(MaxLaterealRot!=0)
+			lateralRotOnly(MaxLaterealRot,numCPU);
+			
+			run("Size...", "width="+finalXsize+" height="+finalYsize+" depth="+finalZsize+" interpolation=Bicubic");
+		}
+		
+		if(realHeightVal>=1){
+			
+			run("Size...", "width="+round(getWidth*realdepthVal)+" height="+round(getHeight*realHeightVal)+" depth="+nSlices+" interpolation=Bicubic");// this makes XY 1µm
+			XlateralTrans = round(maxX*(getWidth/BestWidth));
+			YlateralTrans=round(maxY*(getHeight/maxH));
+			run("Translate...", "x="+XlateralTrans+" y="+YlateralTrans+" interpolation=None stack");
+			print("XY moved X; "+XlateralTrans+"  reference moved Y; "+YlateralTrans+"  getWidth; "+getWidth+"  getHeight; "+getHeight);
+			
+			if(MaxLaterealRot!=0)
+			lateralRotOnly(MaxLaterealRot,numCPU);
+			
+			run("Size...", "width="+finalXsize+" height="+finalYsize+" depth="+finalZsize+" interpolation=Bicubic");
+		}
+	}//if(realdepthVal>=1){
+}
+
+function lateralRotOnly(MaxLaterealRot,numCPU){
+	getVoxelSize(OriSampWidth, OriSampHeight, OriSampDepth, OriSampUnit);
+	if(bitd==8)
+	run("16-bit");
+	
+	run("Rotation Hideo headless", "rotate="+MaxLaterealRot+" 3d in=InMacro interpolation=BICUBIC cpu="+numCPU+"");
+	run("Properties...", "channels=1 slices="+nSlices+" frames=1 unit=microns pixel_width="+OriSampWidth+" pixel_height="+OriSampHeight+" voxel_depth="+OriSampDepth+"");
+
+}
+	
+	
 function lowerThresholding (ThreArray){
 	lowthreAveRange=ThreArray[0];
 	lowthreMin=ThreArray[1];
