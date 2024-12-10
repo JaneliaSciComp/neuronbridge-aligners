@@ -1,10 +1,10 @@
-FROM oraclelinux:8
+FROM oraclelinux:9
+ARG TARGETPLATFORM
 
 RUN dnf update -y && \
     dnf install -y epel-release && \
     dnf install -y --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm && \
-    dnf install -y --nogpgcheck https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm && \
-    dnf config-manager --set-enabled ol8_codeready_builder
+    dnf config-manager --set-enabled ol9_codeready_builder
 
 RUN dnf install -y \
         net-tools \
