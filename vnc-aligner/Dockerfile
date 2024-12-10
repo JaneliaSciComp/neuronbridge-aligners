@@ -1,20 +1,24 @@
-FROM scientificlinux/sl:7
+FROM oraclelinux:8
 
-RUN yum update -y && \
-    yum install -y epel-release && \
-    yum install -y \
+RUN dnf update -y && \
+    dnf install -y epel-release && \
+    dnf install -y --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm && \
+    dnf install -y --nogpgcheck https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm && \
+    dnf config-manager --set-enabled ol8_codeready_builder
+
+RUN dnf install -y \
         net-tools \
         libX11-devel \
         Xvfb \
         ImageMagick \
         tree jq bc
 
-RUN yum install -y python3-pip && \
+RUN dnf install -y python3-pip && \
     pip3 install --upgrade pip && \
     pip3 install yq
 
 RUN echo "Installing S3 FUSE and AWS CLI"
-RUN yum install -y fuse-devel s3fs-fuse \
+RUN dnf install -y fuse3-devel s3fs-fuse \
         groff wget tar unzip less
 
 WORKDIR /awsinstall
@@ -26,11 +30,10 @@ RUN rm -rf aws*
 WORKDIR /opt
 
 # Prereqs for Fiji and CMTK
-RUN yum localinstall --nogpgcheck -y https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm && \
-    yum install -y \
-        ffmpeg \
+RUN dnf install -y \
         mesa-libGLU libXtst-devel libXrender \
         fftw-libs-double
+RUN dnf install -y ffmpeg
 
 RUN echo "Installing Fiji"
 ARG FIJI_VERSION=20221005-1117
