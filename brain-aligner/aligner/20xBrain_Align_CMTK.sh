@@ -54,6 +54,7 @@ MACRO_DIR=/opt/aligner/fiji_macros
 # Fiji macros
 MIPGENERATION="${MACRO_DIR}/Color_Depth_MIP_batch_0404_2019_For_Pipeline.ijm"
 NRRDCONV="${MACRO_DIR}/nrrd2v3draw.ijm"
+NRRD2H5J="${MACRO_DIR}/nrrd2h5j.ijm"
 PREPROCIMG="${MACRO_DIR}/20x_40x_Brain_Global_Aligner_Pipeline.ijm"
 TWELVEBITCONV="${MACRO_DIR}/12bit_Conversion.ijm"
 SCOREGENERATION="${MACRO_DIR}/Score_Generator_Cluster.ijm"
@@ -162,6 +163,47 @@ function generateAllMIPs() {
         echo "Generated MIPS for channel ${i}"
     done
     echo "Finished MIPs generation for all signal channels"
+}
+
+function convertNRRDtoH5J() {
+    local _sigDir=$1
+    local _sigBaseName=$2
+    local _h5jOutput=$3
+
+    # Build list of NRRD files for all channels
+    local nrrdFiles=""
+    for ((i=1; i<=$NCHANNELS; i++)); do
+        nrrdFiles="${nrrdFiles},${_sigDir}/${_sigBaseName}_0${i}.nrrd"
+    done
+    # Remove leading comma
+    nrrdFiles="${nrrdFiles:1}"
+
+    local h5jFile="${_h5jOutput}/${_sigBaseName}.h5j"
+
+    if [[ -e ${h5jFile} ]]; then
+        echo "Already exists: ${h5jFile}"
+    else
+        echo "+---------------------------------------------------------------------------------------+"
+        echo "| Converting NRRD to H5J"
+        echo "| Output: ${h5jFile}"
+        echo "| Channels: ${NCHANNELS}"
+        echo "+---------------------------------------------------------------------------------------+"
+
+        local convCmdArgs="${h5jFile},${nrrdFiles}"
+        local convCmd="$FIJI --ij2 --mem ${memResource} ${HEADLESS_FIJI_FLAG} -macro ${NRRD2H5J} \"${convCmdArgs}\""
+        echo "Convert NRRD to H5J: ${convCmd}"
+        START=`date '+%F %T'`
+        eval ${convCmd}
+        STOP=`date '+%F %T'`
+
+        if [[ -e ${h5jFile} ]]; then
+            echo "Successfully created H5J file: ${h5jFile}"
+            echo "NRRD to H5J conversion start: $START"
+            echo "NRRD to H5J conversion stop: $STOP"
+        else
+            echo "Warning: H5J file was not created: ${h5jFile}"
+        fi
+    fi
 }
 
 function checkTimeout() {
@@ -419,6 +461,10 @@ scoreGen "${sig}_01.nrrd" ${TEMPLATE} "score2018"
 MIPS_OUTPUT=${MIPS_OUTPUT:-"${OUTPUT}/MIP"}
 generateAllMIPs ${OUTPUT} ${sig} ${MIPS_OUTPUT}
 
+# Convert NRRD to H5J
+H5J_OUTPUT=${H5J_OUTPUT:-"${OUTPUT}"}
+convertNRRDtoH5J ${OUTPUT} ${sig} ${H5J_OUTPUT}
+
 for fin in ${OUTPUT}/*.avi; do
     fout=${fin%.avi}.mp4
     echo "ffmpeg -y -r 7 -i ${fin} -vcodec libx264 -b:v 2000000 -preset slow -tune film -pix_fmt yuv420p ${fout}"
@@ -436,11 +482,11 @@ find $OUTPUT \
   -regex ".*\.(png|jpg|txt|log|nrrd)" \
   -exec cp {} $DEBUG_DIR \;
 
-echo copy {property,nrrd,jpg,png,mp4,txt} to $FINALOUTPUT
+echo copy {property,nrrd,h5j,jpg,png,mp4,txt} to $FINALOUTPUT
 find $OUTPUT \
   -maxdepth 1 \
   -regextype posix-extended \
-  -regex ".*\.(property|nrrd|jpg|png|mp4|txt|yaml)" \
+  -regex ".*\.(property|nrrd|h5j|jpg|png|mp4|txt|yaml)" \
   -exec cp {} $FINALOUTPUT \;
 
 echo copy $MIPS_OUTPUT $FINALOUTPUT

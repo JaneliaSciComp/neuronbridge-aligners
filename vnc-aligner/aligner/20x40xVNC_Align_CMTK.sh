@@ -31,6 +31,7 @@ GENDER_TEMPLATE_SELECTOR="u"
 objective="40x"
 
 NRRDCONV="${MACRO_DIR}/nrrd2v3draw_MCFO.ijm"
+NRRD2H5J="${MACRO_DIR}/nrrd2h5j.ijm"
 PREPROCIMG="${MACRO_DIR}/VNC_preImageProcessing_Pipeline_07_29_2022.ijm"
 NRRDCOMP="$MACRO_DIR/nrrd_compression.ijm"
  
@@ -205,6 +206,58 @@ function generateAllMIPs() {
         fi
     done
     echo "Finished MIPs generation for all signal channels"
+}
+
+function convertNRRDtoH5J() {
+    local _sigDir=$1
+    local _sigBaseName=$2
+    local _h5jOutput=$3
+
+    # Build list of NRRD files for channels that exist (1-4)
+    local nrrdFiles=""
+    local channelCount=0
+    for ((i=1; i<=4; i++)); do
+        local nrrdFile="${_sigDir}/${_sigBaseName}_0${i}.nrrd"
+        if [[ -e ${nrrdFile} ]]; then
+            nrrdFiles="${nrrdFiles},${nrrdFile}"
+            channelCount=$((channelCount+1))
+        fi
+    done
+
+    if [[ ${channelCount} -eq 0 ]]; then
+        echo "No NRRD channel files found for ${_sigBaseName}"
+        return
+    fi
+
+    # Remove leading comma
+    nrrdFiles="${nrrdFiles:1}"
+
+    local h5jFile="${_h5jOutput}/${_sigBaseName}.h5j"
+
+    if [[ -e ${h5jFile} ]]; then
+        echo "Already exists: ${h5jFile}"
+    else
+        echo "+---------------------------------------------------------------------------------------+"
+        echo "| Converting NRRD to H5J"
+        echo "| Output: ${h5jFile}"
+        echo "| Channels: ${channelCount}"
+        echo "+---------------------------------------------------------------------------------------+"
+
+        local convCmdArgs="${h5jFile},${nrrdFiles}"
+        local convCmd="$FIJI ${FIJI_OPTS} -macro ${NRRD2H5J} \"${convCmdArgs}\""
+        echo "Convert NRRD to H5J: ${convCmd}"
+        START=`date '+%F %T'`
+        eval ${convCmd}
+        STOP=`date '+%F %T'`
+
+        if [[ -e ${h5jFile} ]]; then
+            echo "Successfully created H5J file: ${h5jFile}"
+            echo "NRRD to H5J conversion start: $START"
+            echo "NRRD to H5J conversion stop: $STOP"
+        else
+            echo "Warning: H5J file was not created: ${h5jFile}"
+        fi
+    fi
 }
 
 # write output properties for JACS
@@ -485,6 +538,10 @@ scoreGen "${sig}_01.nrrd" ${TARGET_TEMPLATE} "score2018"
 MIPS_OUTPUT=${MIPS_OUTPUT:-"${OUTPUT}/MIP"}
 generateAllMIPs ${OUTPUT} ${sig} ${MIPS_OUTPUT}
 
+# Convert NRRD to H5J
+H5J_OUTPUT=${H5J_OUTPUT:-"${OUTPUT}"}
+convertNRRDtoH5J ${OUTPUT} ${sig} ${H5J_OUTPUT}
+
 for fin in ${OUTPUT}/*.avi; do
     fout=${fin%.avi}.mp4
     echo "ffmpeg -y -r 7 -i ${fin} -vcodec libx264 -b:v 2000000 -preset slow -tune film -pix_fmt yuv420p ${fout}"
@@ -502,11 +559,11 @@ find $OUTPUT \
   -regex ".*\.(png|jpg|txt|log|nrrd)" \
   -exec cp {} $DEBUG_DIR \;
 
-echo copy {avi,property,nrrd,jpg,png,mp4,txt} to $FINALOUTPUT
+echo copy {avi,property,nrrd,h5j,jpg,png,mp4,txt} to $FINALOUTPUT
 find $OUTPUT \
   -maxdepth 1 \
   -regextype posix-extended \
-  -regex ".*\.(avi|property|nrrd|jpg|png|mp4|txt|yaml)" \
+  -regex ".*\.(avi|property|nrrd|h5j|jpg|png|mp4|txt|yaml)" \
   -exec cp {} $FINALOUTPUT \;
 
 echo copy $MIPS_OUTPUT $FINALOUTPUT

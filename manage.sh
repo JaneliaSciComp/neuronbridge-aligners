@@ -1,35 +1,69 @@
 #!/bin/bash
 
 SUDO=
-DOCKER=docker
+BUILDER=docker
 
-cmd_opts=()
+# Parse command
+if [[ $# -eq 0 ]]; then
+    echo "Error: No command specified"
+    exit 1
+fi
 
-while [[ $# > 0 ]]; do
-    key="$1"
-    case $key in
-        --cmd-opt)
-            cmd_opts=("${cmd_opts[@]}" "${2}")
-            shift
+COMMAND=$1
+shift
+
+# Parse container names (everything until we hit an option starting with -)
+container_names=()
+while [[ $# -gt 0 ]] && [[ ! "$1" =~ ^- ]]; do
+    container_names+=("$1")
+    shift
+done
+
+# Parse build/push options
+build_opts=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --with-podman)
+            BUILDER=podman
             shift
             ;;
         *)
-            break
+            build_opts+=("$1")
+            shift
             ;;
     esac
 done
 
-COMMANDS=$1
-CMDARR=(${COMMANDS//+/ })
-shift 1 # remove command parameter from args
-
-container_names=("${@}")
-
 helpmsg="
-$0 COMMAND <containers>
+$0 COMMAND <container> [OPTIONS]
 $0 help
 
-where COMMAND is one of {build,push} 
+COMMAND:
+  build    Build container image(s)
+  push     Push container image(s)
+  help     Show this help message
+
+OPTIONS:
+  --with-podman              Use podman instead of docker
+  --platform=<platforms>     Build for specific platform(s) (comma-separated)
+  --no-cache                 Build without cache
+  <any docker/podman opts>   Additional build/push options
+
+EXAMPLES:
+  # Build with docker (default)
+  $0 build brain-aligner
+
+  # Build with podman
+  $0 build brain-aligner --with-podman
+
+  # Multi-platform build with podman (creates manifest)
+  $0 build brain-aligner --with-podman --platform=linux/amd64,linux/arm64
+
+  # Build with additional options
+  $0 build brain-aligner --no-cache --build-arg VERSION=1.0
+
+  # Push with podman
+  $0 push brain-aligner --with-podman
 "
 
 function findContainerDirs {
@@ -88,7 +122,76 @@ function buildContainer() {
             BUILD_ARGS="${BUILD_ARGS} -t ${NAME}"
         fi
 
-        $SUDO $DOCKER build $BUILD_ARGS ${additional_args[@]} $cdir
+        # Check if using podman with --platform flag
+        local use_manifest=false
+        local platform=""
+        if [[ "$BUILDER" == "podman" ]]; then
+            for arg in "${additional_args[@]}"; do
+                if [[ "$arg" == --platform=* ]]; then
+                    use_manifest=true
+                    platform="${arg#--platform=}"
+                    break
+                fi
+            done
+        fi
+
+        if [[ "$use_manifest" == "true" ]]; then
+            # Podman multi-platform build using manifest
+            echo "Building with podman manifest for platform: $platform"
+
+            # Get the first tag for manifest name
+            local manifest_name=""
+            if [[ ${#namespaces[@]} -gt 0 ]]; then
+                manifest_name="${namespaces[0]}/${NAME}"
+            else
+                manifest_name="${NAME}"
+            fi
+
+            # Create manifest if it doesn't exist, or remove and recreate
+            echo "Creating manifest: $manifest_name"
+            $SUDO $BUILDER manifest exists "$manifest_name" 2>/dev/null && \
+                $SUDO $BUILDER manifest rm "$manifest_name"
+            $SUDO $BUILDER manifest create "$manifest_name"
+
+            # Build for each platform
+            IFS=',' read -ra PLATFORMS <<< "$platform"
+            for plat in "${PLATFORMS[@]}"; do
+                echo "Building for platform: $plat"
+                local temp_tag="${manifest_name}-${plat//\//-}"
+
+                # Build the image for this platform
+                local filtered_args=()
+                for arg in "${additional_args[@]}"; do
+                    if [[ "$arg" != --platform=* ]]; then
+                        filtered_args+=("$arg")
+                    fi
+                done
+
+                $SUDO $BUILDER build --platform "$plat" -t "$temp_tag" "${filtered_args[@]}" "$cdir"
+
+                # Add to manifest
+                echo "Adding $temp_tag to manifest $manifest_name"
+                $SUDO $BUILDER manifest add "$manifest_name" "$temp_tag"
+            done
+
+            # Tag manifest with all namespace tags
+            if [[ ${#namespaces[@]} -gt 1 ]]; then
+                for ns in "${namespaces[@]:1}"; do
+                    local additional_manifest="${ns}/${NAME}"
+                    echo "Creating additional manifest tag: $additional_manifest"
+                    $SUDO $BUILDER manifest exists "$additional_manifest" 2>/dev/null && \
+                        $SUDO $BUILDER manifest rm "$additional_manifest"
+                    $SUDO $BUILDER manifest create "$additional_manifest"
+                    for plat in "${PLATFORMS[@]}"; do
+                        local temp_tag="${namespaces[0]}/${NAME}-${plat//\//-}"
+                        $SUDO $BUILDER manifest add "$additional_manifest" "$temp_tag"
+                    done
+                done
+            fi
+        else
+            # Standard docker/podman build
+            $SUDO $BUILDER build $BUILD_ARGS ${additional_args[@]} $cdir
+        fi
     done
 }
 
@@ -110,39 +213,56 @@ function pushContainer() {
 
         if [[ ${#namespaces[@]} -gt 0 ]]; then
             for ns in ${namespaces[@]}; do
-                $SUDO $DOCKER push ${additional_args[@]} "${ns}/${NAME}"
+                local image_name="${ns}/${NAME}"
+
+                # Check if this is a manifest (when using podman)
+                if [[ "$BUILDER" == "podman" ]] && $SUDO $BUILDER manifest exists "$image_name" 2>/dev/null; then
+                    echo "Pushing manifest: $image_name"
+                    $SUDO $BUILDER manifest push ${additional_args[@]} "$image_name"
+                else
+                    echo "Pushing image: $image_name"
+                    $SUDO $BUILDER push ${additional_args[@]} "$image_name"
+                fi
             done
         fi
     done
 }
 
-if [[ ${#@} -eq 0 ]] ; then
-    echo $helpmsg
-    exit 1
-fi
-
 readNamespaces
 
-for COMMAND in "${CMDARR[@]}" ; do
-    case ${COMMAND} in
-        build)
-            for container_name in "${container_names[@]}"; do
-                echo "Build ${container_name}"
-                buildContainer ${container_name} "${cmd_opts[@]}"
-            done
-            ;;
+case ${COMMAND} in
+    build)
+        if [[ ${#container_names[@]} -eq 0 ]]; then
+            echo "Error: No container specified"
+            echo "$helpmsg"
+            exit 1
+        fi
+        for container_name in "${container_names[@]}"; do
+            echo "Build ${container_name}"
+            buildContainer ${container_name} "${build_opts[@]}"
+        done
+        ;;
 
-        push)
-            for container_name in "${container_names[@]}"; do
-                echo "Push ${container_name}"
-                pushContainer ${container_name} "${cmd_opts[@]}"
-            done
-            ;;
+    push)
+        if [[ ${#container_names[@]} -eq 0 ]]; then
+            echo "Error: No container specified"
+            echo "$helpmsg"
+            exit 1
+        fi
+        for container_name in "${container_names[@]}"; do
+            echo "Push ${container_name}"
+            pushContainer ${container_name} "${build_opts[@]}"
+        done
+        ;;
 
-        help)
-            echo $helpmsg
-            exit 0
-            ;;
+    help)
+        echo "$helpmsg"
+        exit 0
+        ;;
 
-    esac
-done
+    *)
+        echo "Error: Unknown command '${COMMAND}'"
+        echo "$helpmsg"
+        exit 1
+        ;;
+esac
