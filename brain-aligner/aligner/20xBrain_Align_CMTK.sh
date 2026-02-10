@@ -180,6 +180,8 @@ function convertNRRDtoH5J() {
 
     local h5jFile="${_h5jOutput}/${_sigBaseName}.h5j"
 
+    echo "Create H5J: ${h5jFile}"
+
     if [[ -e ${h5jFile} ]]; then
         echo "Already exists: ${h5jFile}"
     else
@@ -463,7 +465,7 @@ generateAllMIPs ${OUTPUT} ${sig} ${MIPS_OUTPUT}
 
 # Convert NRRD to H5J
 H5J_OUTPUT=${H5J_OUTPUT:-"${OUTPUT}"}
-convertNRRDtoH5J ${OUTPUT} ${sig} ${H5J_OUTPUT}
+convertNRRDtoH5J ${OUTPUT} ${sig##*/} ${H5J_OUTPUT}
 
 for fin in ${OUTPUT}/*.avi; do
     fout=${fin%.avi}.mp4
