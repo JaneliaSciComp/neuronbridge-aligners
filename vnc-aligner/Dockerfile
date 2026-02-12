@@ -77,13 +77,13 @@ RUN echo "Installing Fiji plugins for the aligner"
 ENV PLUGINS_SOURCE=/opt/aligner/fiji_plugins
 ENV PLUGINS_TARGET=/opt/Fiji/plugins
 RUN cp -R $PLUGINS_SOURCE/* $PLUGINS_TARGET \
- && /opt/Fiji/ImageJ-linux64 --run $PLUGINS_TARGET/H5J_Installer.jar \
  && /bin/rm -rf $PLUGINS_SOURCE
 
 RUN echo "Installing Fiji LUTs for color depth"
 ENV LUTS_SOURCE=/opt/aligner/fiji_luts
 ENV LUTS_TARGET=/opt/Fiji/luts
-RUN cp -R $LUTS_SOURCE/* $LUTS_TARGET && /bin/rm -rf $LUTS_SOURCE
+RUN cp -R $LUTS_SOURCE/* $LUTS_TARGET \
+ && /bin/rm -rf $LUTS_SOURCE
 
 RUN echo "Fixing permissions"
 RUN chown -R root:root /opt/*
