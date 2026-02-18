@@ -36,7 +36,7 @@ RUN dnf install -y \
         fftw-libs-double
 
 RUN echo "Installing Fiji"
-ARG FIJI_VERSION=20221005-1117
+ARG FIJI_VERSION=20250514-1117
 ENV FIJI_FILE=fiji-linux64.zip
 ENV FIJI_DOWNLOAD_URL=https://downloads.imagej.net/fiji/archive/${FIJI_VERSION}/${FIJI_FILE}
 ENV EXTTRACT_CMD="unzip"
@@ -79,7 +79,12 @@ RUN echo "Installing Fiji plugins for the aligner"
 ENV PLUGINS_SOURCE=/opt/aligner/fiji_plugins
 ENV PLUGINS_TARGET=/opt/Fiji/plugins
 RUN cp -R $PLUGINS_SOURCE/* $PLUGINS_TARGET
-RUN /opt/Fiji/ImageJ-linux64 --run ${PLUGINS_TARGET}/H5J_Installer.jar
+
+RUN wget -O /opt/Fiji/jars/javacpp-platform-1.5.10.jar \
+    https://repo1.maven.org/maven2/org/bytedeco/javacpp-platform/1.5.10/javacpp-platform-1.5.10.jar \
+ && wget -O /opt/Fiji/jars/ffmpeg-platform-6.1.1-1.5.10.jar \
+    https://repo1.maven.org/maven2/org/bytedeco/ffmpeg-platform/6.1.1-1.5.10/ffmpeg-platform-6.1.1-1.5.10.jar \
+ && /opt/Fiji/ImageJ-linux64 --ij2 --run ijm -macro /opt/aligner/fiji_macros/h5jinstall.ijm
 
 RUN echo "Installing Fiji LUTs for color depth"
 ENV LUTS_SOURCE=/opt/aligner/fiji_luts
