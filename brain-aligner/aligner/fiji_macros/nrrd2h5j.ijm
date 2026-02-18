@@ -23,7 +23,7 @@ for (i=1; i<numArgs; i++) {
 s += "create ignore";
 print("Merge Channels... "+s);
 run("Merge Channels...", s);
-run("H5J Writer", "save=[" + h5jfile +"]");
+run("H5J...", "save=[" + h5jfile +"]");
 
 print("Done");
 close();
