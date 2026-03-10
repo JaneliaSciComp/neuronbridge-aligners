@@ -81,10 +81,10 @@ ENV PLUGINS_TARGET=/opt/Fiji/plugins
 RUN cp -R $PLUGINS_SOURCE/* $PLUGINS_TARGET
 
 RUN wget -O /opt/Fiji/jars/javacpp-platform-1.5.10.jar \
-    https://repo1.maven.org/maven2/org/bytedeco/javacpp-platform/1.5.10/javacpp-platform-1.5.10.jar \
- && wget -O /opt/Fiji/jars/ffmpeg-platform-6.1.1-1.5.10.jar \
-    https://repo1.maven.org/maven2/org/bytedeco/ffmpeg-platform/6.1.1-1.5.10/ffmpeg-platform-6.1.1-1.5.10.jar \
- && rm -f /opt/Fiji/jars/imagej-updater*.jar \
+    https://repo1.maven.org/maven2/org/bytedeco/javacpp-platform/1.5.10/javacpp-platform-1.5.10.jar
+RUN wget -O /opt/Fiji/jars/ffmpeg-platform-6.1.1-1.5.10.jar \
+    https://repo1.maven.org/maven2/org/bytedeco/ffmpeg-platform/6.1.1-1.5.10/ffmpeg-platform-6.1.1-1.5.10.jar
+RUN rm -f /opt/Fiji/jars/imagej-updater*.jar \
  && /opt/Fiji/ImageJ-linux64 --ij2 --headless -macro /opt/aligner/fiji_macros/h5jinstall.ijm
 
 RUN echo "Installing Fiji LUTs for color depth"
