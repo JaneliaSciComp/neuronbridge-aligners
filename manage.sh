@@ -151,6 +151,11 @@ function buildContainer() {
             echo "Creating manifest: $manifest_name"
             $SUDO $BUILDER manifest exists "$manifest_name" 2>/dev/null && \
                 $SUDO $BUILDER manifest rm "$manifest_name"
+            if $SUDO $BUILDER image exists "$manifest_name" 2>/dev/null; then
+                echo "Removing existing image blocking manifest name: $manifest_name"
+                $SUDO $BUILDER ps -a --format '{{.ID}}' --filter "ancestor=$manifest_name" | xargs -r $SUDO $BUILDER rm -f
+                $SUDO $BUILDER rmi --force "$manifest_name"
+            fi
             $SUDO $BUILDER manifest create "$manifest_name"
 
             # Build for each platform
@@ -158,6 +163,13 @@ function buildContainer() {
             for plat in "${PLATFORMS[@]}"; do
                 echo "Building for platform: $plat"
                 local temp_tag="${manifest_name}-${plat//\//-}"
+
+                # Remove existing image if it exists (podman requires this before manifest add)
+                if $SUDO $BUILDER image exists "$temp_tag" 2>/dev/null; then
+                    echo "Removing existing image: $temp_tag"
+                    $SUDO $BUILDER ps -a --format '{{.ID}}' --filter "ancestor=$temp_tag" | xargs -r $SUDO $BUILDER rm -f
+                    $SUDO $BUILDER rmi --force "$temp_tag"
+                fi
 
                 # Build the image for this platform
                 local filtered_args=()
@@ -181,6 +193,11 @@ function buildContainer() {
                     echo "Creating additional manifest tag: $additional_manifest"
                     $SUDO $BUILDER manifest exists "$additional_manifest" 2>/dev/null && \
                         $SUDO $BUILDER manifest rm "$additional_manifest"
+                    if $SUDO $BUILDER image exists "$additional_manifest" 2>/dev/null; then
+                        echo "Removing existing image blocking manifest name: $additional_manifest"
+                        $SUDO $BUILDER ps -a --format '{{.ID}}' --filter "ancestor=$additional_manifest" | xargs -r $SUDO $BUILDER rm -f
+                        $SUDO $BUILDER rmi --force "$additional_manifest"
+                    fi
                     $SUDO $BUILDER manifest create "$additional_manifest"
                     for plat in "${PLATFORMS[@]}"; do
                         local temp_tag="${namespaces[0]}/${NAME}-${plat//\//-}"

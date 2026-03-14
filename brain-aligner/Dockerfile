@@ -8,7 +8,7 @@ RUN dnf update -y && \
 
 RUN dnf install -y \
         net-tools \
-        libX11-devel \
+        libX11-devel x265-devel \
         Xvfb \
         ImageMagick \
         tree jq bc
@@ -36,8 +36,8 @@ RUN dnf install -y \
         fftw-libs-double
 
 RUN echo "Installing Fiji"
-ARG FIJI_VERSION=20250514-1117
-ENV FIJI_FILE=fiji-linux64.zip
+ARG FIJI_VERSION=stable/20260307-1417
+ENV FIJI_FILE=fiji-stable-linux64-jdk.zip
 ENV FIJI_DOWNLOAD_URL=https://downloads.imagej.net/fiji/archive/${FIJI_VERSION}/${FIJI_FILE}
 ENV EXTTRACT_CMD="unzip"
 RUN wget --no-check-certificate ${FIJI_DOWNLOAD_URL}
@@ -64,6 +64,7 @@ ENV S3_TEMPLATES_MOUNTPOINT=/s3_alignment_templates
 RUN mkdir -p ${S3_TEMPLATES_MOUNTPOINT}
 
 ENV XVFB_HELPER_SCRIPTS_DIR=/opt/xvfb_helper_scripts
+ENV FB_MODE=
 
 COPY xvfb_helper_scripts ${XVFB_HELPER_SCRIPTS_DIR}
 
@@ -76,16 +77,22 @@ RUN chmod 755 /opt/aligner/*.sh
 RUN chmod 755 /opt/aligner-scripts/*.sh
 
 RUN echo "Installing Fiji plugins for the aligner"
-ENV PLUGINS_SOURCE=/opt/aligner/fiji_plugins
-ENV PLUGINS_TARGET=/opt/Fiji/plugins
-RUN cp -R $PLUGINS_SOURCE/* $PLUGINS_TARGET
+RUN cp -R /opt/aligner/fiji_plugins/* /opt/Fiji/plugins \
+ && cp -R /opt/aligner/fiji_jars/* /opt/Fiji/jars
 
-RUN wget -O /opt/Fiji/jars/javacpp-platform-1.5.10.jar \
-    https://repo1.maven.org/maven2/org/bytedeco/javacpp-platform/1.5.10/javacpp-platform-1.5.10.jar
-RUN wget -O /opt/Fiji/jars/ffmpeg-platform-6.1.1-1.5.10.jar \
-    https://repo1.maven.org/maven2/org/bytedeco/ffmpeg-platform/6.1.1-1.5.10/ffmpeg-platform-6.1.1-1.5.10.jar
-RUN rm -f /opt/Fiji/jars/imagej-updater*.jar \
- && /opt/Fiji/ImageJ-linux64 --ij2 --headless -macro /opt/aligner/fiji_macros/h5jinstall.ijm
+# ENV JAVACPP_PLATFORM_VERSION=1.5.10
+# ENV FFMPEG_PLATFORM_VERSION=6.1.1-1.5.10
+
+# RUN wget -O /opt/Fiji/jars/javacpp-platform-${JAVACPP_PLATFORM_VERSION}.jar \
+#     https://repo.maven.apache.org/maven2/org/bytedeco/javacpp-platform/${JAVACPP_PLATFORM_VERSION}/javacpp-platform-${JAVACPP_PLATFORM_VERSION}.jar
+# RUN wget -O /opt/Fiji/jars/ffmpeg-platform-${FFMPEG_PLATFORM_VERSION}.jar \
+#     https://repo.maven.apache.org/maven2/org/bytedeco/ffmpeg-platform/${FFMPEG_PLATFORM_VERSION}/ffmpeg-platform-${FFMPEG_PLATFORM_VERSION}.jar
+
+# RUN /opt/Fiji/ImageJ-linux64 --headless -macro /opt/aligner/fiji_macros/h5jinstall.ijm \
+#  && rm -rf /root/.javacpp \
+#  && rm -rf /opt/Fiji/jars/imagej-updater*.jar
+
+RUN rm -rf /opt/Fiji/jars/imagej-updater*.jar
 
 RUN echo "Installing Fiji LUTs for color depth"
 ENV LUTS_SOURCE=/opt/aligner/fiji_luts
