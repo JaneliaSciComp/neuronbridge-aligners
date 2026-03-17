@@ -603,7 +603,9 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 					//	saveAs("PNG", savedir+ThreTry+"_SegAnalysis.png");
 					
 					beforeAnalysis=nImages();
-					run("Analyze Particles...", "size=20000.00-Infinity show=Masks display exclude clear");
+					analyzeFlags = "size=20000.00-Infinity show=Masks display exclude clear";
+					print("Analyze Particles: " + analyzeFlags);
+					run("Analyze Particles...", analyzeFlags);
 					
 					logsum=getInfo("log");
 					File.saveString(logsum, filepath);
@@ -622,7 +624,8 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							run("RGB Color");
 							run("8-bit");
 							
-							run("Analyze Particles...", "size=10000-Infinity show=Nothing display exclude clear");
+							analyzeFlags = "size=10000-Infinity display exclude clear";
+							run("Analyze Particles...", analyzeFlags);
 							updateResults();
 							
 							if(getValue("results.count")>0){
@@ -884,18 +887,21 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 					print("inverted 755");
 				}
 				
-				run("Analyze Particles...", "size=10000.00-Infinity show=Masks display exclude clear");
+				analyzeFlags = "size=10000.00-Infinity show=Masks display exclude clear";
+				print("Analyze Particles: " + analyzeFlags);
+				run("Analyze Particles...", analyzeFlags);
 				
 				if(getValue("results.count")==0){
 					run("Invert LUT");
 					run("RGB Color");
 					run("8-bit");
-					
-					run("Analyze Particles...", "size=10000-Infinity show=Nothing display exclude clear");
+
+					analyzeFlags = "size=10000-Infinity display exclude clear"
+					run("Analyze Particles...", analyzeFlags);
 					
 					if(getValue("results.count")>0){
 						invertON=1;
-						print("542 Inverted BW");
+						print("898 Inverted BW");
 						updateResults();
 					}
 				}//if(getValue("results.count")==0){
@@ -1075,19 +1081,22 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 				run("Make Binary");
 				
 				if(getValue("results.count")>1)
-				setSize=maxsize/2;
+					setSize=maxsize/2;
 				else
-				setSize=10000;
+					setSize=10000;
 				
 				if(setSize<10000)
-				setSize=10000;
+					setSize=10000;
 				
 				//		setBatchMode(false);
 				//		updateDisplay();
 				//		"do"
 				//		exit();
 				
-				run("Analyze Particles...", "size="+setSize+"-Infinity show=Nothing display exclude clear");//exclude object on the edge
+				// exclude object on the edge
+				analyzeFlags = "size="+setSize+"-Infinity display exclude clear";
+				print("Analyze particles: " + analyzeFlags);
+				run("Analyze Particles...", analyzeFlags);
 				updateResults();
 				
 				if(getValue("results.count")>1){
@@ -1100,7 +1109,10 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 							setSize=round(testsize-testsize*0.1);
 						}
 					}
-					run("Analyze Particles...", "size="+setSize+"-Infinity show=Nothing display exclude clear");//exclude object on the edge
+					//exclude object on the edge
+					analyzeFlags = "size="+setSize+"-Infinity display exclude clear";
+					print("Analyze particles: " + analyzeFlags);
+					run("Analyze Particles...", analyzeFlags);
 					updateResults();
 				}				
 				
@@ -1115,7 +1127,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 					run("RGB Color");
 					run("8-bit");
 					invertON=1;
-					run("Analyze Particles...", "size="+setSize+"-Infinity show=Nothing display exclude clear");
+					run("Analyze Particles...", "size="+setSize+"-Infinity display exclude clear");
 					updateResults();
 				}
 				
@@ -1519,8 +1531,8 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 						run("8-bit");
 					}
 					aveF=getImageID();
-					//	run("Analyze Particles...", "size=1000-Infinity circularity=0.00-1.00 show=Nothing display clear");
-					run("Analyze Particles...", "size=1000-Infinity show=Nothing display exclude clear");
+					//	run("Analyze Particles...", "size=1000-Infinity circularity=0.00-1.00 display clear");
+					run("Analyze Particles...", "size=1000-Infinity display exclude clear");
 					
 					sumAR=0; sumAF=0; sumAC=0;
 					for(frontR=0; frontR<getValue("results.count"); frontR++){//AR result measurement
@@ -1550,7 +1562,7 @@ function God(savedir, noext,origi,Batch,myDir0,chanspec,temptype,AdvanceDepth,La
 					}
 					
 					aveR=getImageID();
-					run("Analyze Particles...", "size=1000-Infinity show=Nothing display exclude clear");
+					run("Analyze Particles...", "size=1000-Infinity display exclude clear");
 					
 					sumAR=0; sumAF=0; sumAC=0;
 					for(rearR=1; rearR<getValue("results.count"); rearR++){//Area result measurement
@@ -3195,13 +3207,13 @@ function shapeMeasurement(numCPU,SmeasurementArray){
 					setThreshold(lowthreSeparation, 65536);
 					run("Make Binary");
 					
-					run("Analyze Particles...", "size=10000-Infinity show=Nothing display exclude clear");
+					run("Analyze Particles...", "size=10000-Infinity display exclude clear");
 					
 					if(getValue("results.count")==0){
 						run("Invert LUT");
 						run("RGB Color");
 						run("8-bit");
-						run("Analyze Particles...", "size=10000-Infinity show=Nothing display exclude clear");
+						run("Analyze Particles...", "size=10000-Infinity display exclude clear");
 						inv1845=1;
 						//				print("inv1851");
 					}//if(getValue("results.count")==0){
@@ -3280,14 +3292,14 @@ function shapeMeasurement(numCPU,SmeasurementArray){
 				run("Make Binary");
 				
 				if(Angle_AR_measure==1 && LeftRight==0){// 1st run, left side only
-					run("Analyze Particles...", "size=10000-Infinity show=Nothing display clear");
+					run("Analyze Particles...", "size=10000-Infinity display clear");
 					updateResults();
 					
 					if(getValue("results.count")==0){
 						run("Invert LUT");
 						run("RGB Color");
 						run("8-bit");
-						run("Analyze Particles...", "size=10000-Infinity show=Nothing display clear");
+						run("Analyze Particles...", "size=10000-Infinity display clear");
 						updateResults();
 					}
 					
@@ -3321,14 +3333,14 @@ function shapeMeasurement(numCPU,SmeasurementArray){
 					
 					run("Make Binary");
 					
-					run("Analyze Particles...", "size=10000-Infinity show=Nothing display clear");
+					run("Analyze Particles...", "size=10000-Infinity display clear");
 					updateResults();
 					
 					if(getValue("results.count")==0){
 						run("Invert LUT");
 						run("RGB Color");
 						run("8-bit");
-						run("Analyze Particles...", "size=10000-Infinity show=Nothing display clear");
+						run("Analyze Particles...", "size=10000-Infinity display clear");
 						updateResults();
 					}
 					

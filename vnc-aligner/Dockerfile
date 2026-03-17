@@ -3,12 +3,12 @@ ARG TARGETPLATFORM
 
 RUN dnf update -y && \
     dnf install -y epel-release && \
-    dnf install -y --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm && \
+    dnf install -y --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm && \
     dnf config-manager --set-enabled ol9_codeready_builder
 
 RUN dnf install -y \
         net-tools \
-        libX11-devel \
+        libX11-devel x265-devel \
         Xvfb \
         ImageMagick \
         tree jq bc
@@ -31,9 +31,9 @@ WORKDIR /opt
 
 # Prereqs for Fiji and CMTK
 RUN dnf install -y \
+        ffmpeg \
         mesa-libGLU libXtst-devel libXrender \
         fftw-libs-double
-RUN dnf install -y ffmpeg
 
 RUN echo "Installing Fiji"
 ARG FIJI_VERSION=20221005-1117
@@ -52,7 +52,7 @@ RUN echo "Installing CMTK"
 ENV CMTK_NAME=cmtk-20190116-sl7avx2
 ENV CMTK_FILE=cmtk-20190116-sl7avx2.tgz
 
-RUN wget https://github.com/JaneliaSciComp/tools-archive/releases/download/1.0.0/${CMTK_FILE} && \
+RUN wget -q https://github.com/JaneliaSciComp/tools-archive/releases/download/1.0.0/${CMTK_FILE} && \
     tar xvf ${CMTK_FILE} && \
     /bin/rm -f ${CMTK_FILE} && \
     ln -s ${CMTK_NAME} CMTK
@@ -66,23 +66,28 @@ ENV S3_VNC_TEMPLATES_MOUNTPOINT=/s3_vnc_alignment_templates
 RUN mkdir -p ${S3_MIP_TEMPLATES_MOUNTPOINT}
 RUN mkdir -p ${S3_VNC_TEMPLATES_MOUNTPOINT}
 
+ENV XVFB_HELPER_SCRIPTS_DIR=/opt/xvfb_helper_scripts
+ENV FB_MODE=
+
+COPY xvfb_helper_scripts ${XVFB_HELPER_SCRIPTS_DIR}
+
 # copy alignment scripts
 COPY aligner /opt/aligner
 COPY scripts /opt/aligner-scripts
+COPY IJ_Prefs.txt /opt/Fiji/IJ_Prefs.txt
 
 RUN chmod 755 /opt/aligner/*.sh
 RUN chmod 755 /opt/aligner-scripts/*.sh
 
 RUN echo "Installing Fiji plugins for the aligner"
-ENV PLUGINS_SOURCE=/opt/aligner/fiji_plugins
-ENV PLUGINS_TARGET=/opt/Fiji/plugins
-RUN cp -R $PLUGINS_SOURCE/* $PLUGINS_TARGET
+RUN cp -R /opt/aligner/fiji_plugins/* /opt/Fiji/plugins \
+ && cp -R /opt/aligner/fiji_jars/* /opt/Fiji/jars
+
+RUN rm -rf /opt/Fiji/jars/imagej-updater*.jar
 
 RUN echo "Installing Fiji LUTs for color depth"
-ENV LUTS_SOURCE=/opt/aligner/fiji_luts
-ENV LUTS_TARGET=/opt/Fiji/luts
-RUN cp -R $LUTS_SOURCE/* $LUTS_TARGET \
- && /bin/rm -rf $LUTS_SOURCE
+RUN cp -R /opt/aligner/fiji_luts/* /opt/Fiji/luts \
+ && /bin/rm -rf /opt/aligner/fiji_luts
 
 RUN echo "Fixing permissions"
 RUN chown -R root:root /opt/*

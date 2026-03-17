@@ -89,7 +89,7 @@ done
 
 umask 0002
 
-default_fb_mode="xvfb"
+default_fb_mode=""
 export NSLOTS=${NSLOTS:-$nslots}
 export FB_MODE=${FB_MODE:-$default_fb_mode}
 echo "Use FB_MODE=${FB_MODE}"

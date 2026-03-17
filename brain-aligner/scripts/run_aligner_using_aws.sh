@@ -2,7 +2,7 @@
 
 DIR=$(cd "$(dirname "$0")"; pwd)
 
-S3_TEMPLATES_MOUNTPOINT=${S3_TEMPLATES_MOUNTPOINT:-"/s3_alignment_templates"}
+S3_BRAIN_TEMPLATES_MOUNTPOINT=${S3_BRAIN_TEMPLATES_MOUNTPOINT:-"/s3_alignment_templates"}
 
 templates_s3bucket_name=
 inputs_s3bucket_name=
@@ -235,13 +235,13 @@ if [[ "${templates_s3bucket_name}" != "" ]] ; then
         s3fs_opts="${s3fs_opts} -o passwd_file=${passwd_file}"
     fi
     # mount templates directory
-    mountTemplatesCmd="/usr/bin/s3fs ${templates_s3bucket_name} ${S3_TEMPLATES_MOUNTPOINT} ${s3fs_opts}"
+    mountTemplatesCmd="/usr/bin/s3fs ${templates_s3bucket_name} ${S3_BRAIN_TEMPLATES_MOUNTPOINT} ${s3fs_opts}"
     echo "Mount templates from S3: ${mountTemplatesCmd}"
     ${mountTemplatesCmd}
     if [[ "${templates_dir_param}" != "" ]] ; then
-        templates_dir=${S3_TEMPLATES_MOUNTPOINT}/${templates_dir_param}
+        templates_dir=${S3_BRAIN_TEMPLATES_MOUNTPOINT}/${templates_dir_param}
     else
-        templates_dir=${S3_TEMPLATES_MOUNTPOINT}
+        templates_dir=${S3_BRAIN_TEMPLATES_MOUNTPOINT}
     fi
     lsTemplatesCmd="ls ${templates_dir}"
     templatesCount=`${lsTemplatesCmd} | wc -l`

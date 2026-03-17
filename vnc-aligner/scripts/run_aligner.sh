@@ -66,18 +66,22 @@ done
 
 umask 0002
 
+default_fb_mode=""
 export NSLOTS=${NSLOTS:-$nslots}
-export WORKING_DIR="${output_dir}/temp"
+export FB_MODE=${FB_MODE:-$default_fb_mode}
+echo "Use FB_MODE=${FB_MODE}"
 
+export WORKING_DIR="${output_dir}/temp"
 echo "Create working directory ${WORKING_DIR}"
 mkdir -p ${WORKING_DIR}
 cd ${WORKING_DIR}
 
 # set user directory to the working directory
 JAVA_USER_DIR="${WORKING_DIR}"
+JAVA_NATIVE_LIBS_DIR="${WORKING_DIR}"
 echo "Set java user directory to ${JAVA_USER_DIR}"
 
-export JAVA_TOOL_OPTIONS="-Duser.home=${JAVA_USER_DIR}"
+export JAVA_TOOL_OPTIONS="-Duser.home=${JAVA_USER_DIR} -Djava.library.path=${JAVA_NATIVE_LIBS_DIR}"
 
 function cleanTemp {
     if [[ "${DEBUG_MODE}" =~ "debug" ]]; then
@@ -88,6 +92,10 @@ function cleanTemp {
         echo "Cleaned up ${WORKING_DIR}"
     fi
 }
+
+source ${XVFB_HELPER_SCRIPTS_DIR}/setup_xvfb.sh
+function exitHandler() { exitXvfb; cleanTemp; }
+trap exitHandler EXIT
 
 ALIGNMENT_OUTPUT=${ALIGNMENT_OUTPUT:-"${output_dir}/aligned"}
 mkdir -p ${ALIGNMENT_OUTPUT}

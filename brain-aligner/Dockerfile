@@ -3,7 +3,7 @@ ARG TARGETPLATFORM
 
 RUN dnf update -y && \
     dnf install -y epel-release && \
-    dnf install --nogpgcheck -y https://download1.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm && \
+    dnf install -y --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm && \
     dnf config-manager --set-enabled ol9_codeready_builder
 
 RUN dnf install -y \
@@ -59,9 +59,9 @@ RUN wget -q https://github.com/JaneliaSciComp/tools-archive/releases/download/1.
 
 ENV CMTK_HOME=/opt/CMTK
 
-ENV S3_TEMPLATES_MOUNTPOINT=/s3_alignment_templates
+ENV S3_BRAIN_TEMPLATES_MOUNTPOINT=/s3_alignment_templates
 
-RUN mkdir -p ${S3_TEMPLATES_MOUNTPOINT}
+RUN mkdir -p ${S3_BRAIN_TEMPLATES_MOUNTPOINT}
 
 ENV XVFB_HELPER_SCRIPTS_DIR=/opt/xvfb_helper_scripts
 ENV FB_MODE=
@@ -80,25 +80,11 @@ RUN echo "Installing Fiji plugins for the aligner"
 RUN cp -R /opt/aligner/fiji_plugins/* /opt/Fiji/plugins \
  && cp -R /opt/aligner/fiji_jars/* /opt/Fiji/jars
 
-# ENV JAVACPP_PLATFORM_VERSION=1.5.10
-# ENV FFMPEG_PLATFORM_VERSION=6.1.1-1.5.10
-
-# RUN wget -O /opt/Fiji/jars/javacpp-platform-${JAVACPP_PLATFORM_VERSION}.jar \
-#     https://repo.maven.apache.org/maven2/org/bytedeco/javacpp-platform/${JAVACPP_PLATFORM_VERSION}/javacpp-platform-${JAVACPP_PLATFORM_VERSION}.jar
-# RUN wget -O /opt/Fiji/jars/ffmpeg-platform-${FFMPEG_PLATFORM_VERSION}.jar \
-#     https://repo.maven.apache.org/maven2/org/bytedeco/ffmpeg-platform/${FFMPEG_PLATFORM_VERSION}/ffmpeg-platform-${FFMPEG_PLATFORM_VERSION}.jar
-
-# RUN /opt/Fiji/ImageJ-linux64 --headless -macro /opt/aligner/fiji_macros/h5jinstall.ijm \
-#  && rm -rf /root/.javacpp \
-#  && rm -rf /opt/Fiji/jars/imagej-updater*.jar
-
 RUN rm -rf /opt/Fiji/jars/imagej-updater*.jar
 
 RUN echo "Installing Fiji LUTs for color depth"
-ENV LUTS_SOURCE=/opt/aligner/fiji_luts
-ENV LUTS_TARGET=/opt/Fiji/luts
-RUN cp -R $LUTS_SOURCE/* $LUTS_TARGET \
- && /bin/rm -rf $LUTS_SOURCE
+RUN cp -R /opt/aligner/fiji_luts/* /opt/Fiji/luts \
+ && /bin/rm -rf /opt/aligner/fiji_luts
 
 RUN echo "Fixing permissions"
 RUN chown -R root:root /opt/*

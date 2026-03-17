@@ -1,0 +1,4 @@
+alwaysOnTop=false
+supportMacroUndo=false
+keepUndoBuffers=false
+doNotSaveWindowLocations=true
