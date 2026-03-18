@@ -295,6 +295,7 @@ if [[ "${alignment_exit_code}" != "0" ]] ; then
     else
         errorMessage="Alignment failed with exit code ${alignment_exit_code}"
     fi
+    echo "Set alignment error: ${errorMessage}"
     updateSearch "${searchId}" 1 0 ${alignedVolume} ${alignmentMovie} ${alignmentScore} ${#mips[@]} "${mips[@]}" "${errorMessage}"
     exit $alignment_exit_code
 fi
@@ -310,12 +311,15 @@ for mip in `ls ${MIPS_OUTPUT}/*.{tif,png,jpg}` ; do
 done
 
 # copy additional results to the s3 output
-for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -regex ".*\.(txt|jpg|png|mp4|yaml|yml|property)"` ; do
+for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -regex ".*\.(txt|jpg|h5j|png|mp4|yaml|yml|property)"` ; do
     aresult_name=$(basename ${aresult})
+    echo "Result name: ${aresult_name}"
     if [[ ${aresult_name} == *.h5j ]] ; then
         alignedVolume="alignment_results/${aresult_name}"
+        echo "Set alignedVolume to ${alignedVolume}"
     elif [[ ${aresult_name} == *.mp4 ]] ; then
         alignmentMovie="alignment_results/${aresult_name}"
+        echo "Set alignmentMovie to ${alignmentMovie}"
     elif [[ ${aresult_name} == *.property ]] ; then
         alignmentScore=$(cat ${aresult})
         if [[ -z "${alignmentScore}" ]] ; then
@@ -323,6 +327,7 @@ for aresult in `find ${ALIGNMENT_OUTPUT} -maxdepth 1 -regextype posix-extended -
             alignmentScore="0"
         fi
     fi
+    echo "COPY RESULTS: aws s3 cp ${aresult} s3://${outputs_s3bucket_name}/${output_dir}/alignment_results/${aresult_name}"
     aws s3 cp ${aresult} s3://${outputs_s3bucket_name}/${output_dir}/alignment_results/${aresult_name}
 done
 

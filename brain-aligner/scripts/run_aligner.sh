@@ -142,9 +142,13 @@ cd ${output_dir}
 echo ""
 echo "~ Listing working files:"
 echo ""
-tree -s $WORKING_DIR
+tree -s ${WORKING_DIR}
+echo ""
+echo "~ Listing alignment output:"
+echo ""
+tree -s ${ALIGNMENT_OUTPUT}
 
-alignment_results=$(shopt -s nullglob dotglob; echo ${ALIGNMENT_OUTPUT}/*.nrrd)
+alignment_results=$(shopt -s nullglob dotglob; echo ${ALIGNMENT_OUTPUT}/*.nrrd ${ALIGNMENT_OUTPUT}/*.h5j)
 echo "Alignment results: ${alignment_results[@]}"
 if (( ${#alignment_results} )); then
     echo "~ Finished alignment: ${input_filepath}"
