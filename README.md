@@ -1,6 +1,5 @@
 # NeuronBridge image aligners
 
-[![DOI](https://zenodo.org/badge/488336834.svg)](https://zenodo.org/badge/latestdoi/488336834)
 
 These containerized aligners are used by NeuronBridge to align user-uploaded imagery in preparation for ad-hoc searching. They run using Docker on AWS Batch.
 
